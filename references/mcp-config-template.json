@@ -1,0 +1,47 @@
+{
+  "mcpServers": {
+    "opencode-free-models": {
+      "command": "opencode-acp",
+      "args": [],
+      "env": {
+        "OPENCODE_CONFIG_CONTENT": "{\"models\":[\"glm/glm-4\",\"github-copilot/gpt-4.1\"]}",
+        "OPENCODE_BIN": "${OPENCODE_BIN}"
+      },
+      "disabled": false,
+      "alwaysAllow": [],
+      "metadata": {
+        "description": "Free AI models via OpenCode for routine coding tasks",
+        "usage": "Offloads boilerplate, refactoring, and documentation to free models",
+        "models": {
+          "glm/glm-4": {
+            "provider": "GLM",
+            "cost": "free",
+            "strengths": ["Python", "documentation", "general coding"]
+          },
+          "github-copilot/gpt-4.1": {
+            "provider": "GitHub Copilot",
+            "cost": "free with GitHub account",
+            "strengths": ["TypeScript", "JavaScript", "code completion"]
+          }
+        },
+        "routing_rules": {
+          "delegate": [
+            "Boilerplate generation",
+            "Type definitions",
+            "CRUD scaffolding",
+            "Test fixtures",
+            "Documentation",
+            "Simple refactoring"
+          ],
+          "keep_in_claude": [
+            "Architectural decisions",
+            "Security-sensitive code",
+            "Complex business logic",
+            "Debugging and analysis",
+            "Domain-specific reasoning"
+          ]
+        }
+      }
+    }
+  }
+}
