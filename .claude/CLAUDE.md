@@ -13,7 +13,7 @@
 - `pre-commit run -a` — all gates.
 - `node --test tests/*.test.js` — unit tests for scorer and stub.
 - `bash tests/scripts.test.sh` — tests for shell scripts.
-- `bash tests/run-csd.sh <red|green|refactor> <scenario-id> [reps]` — live eval (local only).
+- `bash tests/run-local.sh <red|green|refactor> <scenario-id> [reps]` — live eval via headless `claude -p` (local only; tools limited to tests/allowed-tools.txt).
 
 ## Rules
 
