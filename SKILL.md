@@ -1,121 +1,45 @@
 ---
 name: token-saver
-description: Automatically delegates routine coding tasks to free AI models (GLM, GitHub Copilot, and others) via OpenCode MCP, preserving Claude's context window and rate limits for complex reasoning. Use when generating boilerplate, CRUD operations, simple refactoring, test scaffolding, documentation, type definitions, or any well-defined low-judgment task. Triggers automatically when Claude recognizes routine patterns.
+description: Use when a request includes routine, well-specified code of any size (a schema, types, fixtures, docstrings or JSDoc, boilerplate, a mechanical refactor), even alongside other work, and opencode-delegate tools such as delegate_task are listed, including as deferred tools.
 ---
 
 # Token Saver
 
-Offload routine tasks to free models. Save Claude for complex reasoning.
+## Overview
 
-## Automatic Delegation Rules
+The `opencode-delegate` MCP server hands routine work to a cheaper model. You brief it and review the diff instead of writing the code.
 
-**DELEGATE** (routine, well-defined):
-- Boilerplate code generation
-- TypeScript/Python interfaces and types
-- CRUD operations and database models
-- Simple data validation (Zod schemas, validators)
-- Test scaffolding and fixtures
-- Code formatting and style cleanup
-- Docstrings and inline comments
-- README sections and documentation
-- Repetitive refactoring (early returns, destructuring)
-- Form field mappings
-- Standard API endpoint scaffolding
+**Rule:** if `delegate_task` is in your tool list and the task is on the delegate list below, call `delegate_task`. Small tasks included. "Briefing takes longer than doing it" is not a reason to skip: the brief is a few lines, the review is one diff, and the point is saving your tokens, not this task's seconds.
 
-**KEEP IN CLAUDE** (requires judgment):
-- Architectural decisions
-- Security-sensitive code
-- Complex business logic
-- Error handling strategy
-- Performance optimization
-- Code review and analysis
-- Debugging and root cause analysis
-- Domain-specific logic requiring context
-- Anything touching auth, payments, PII
+## Before the first delegation
 
-## How to Delegate
+1. Call `get_delegate_config`.
+2. If `autoApprove` is `true`, call `set_delegate_config` with `auto_approve: false` before any `delegate_task`. A missing config file silently defaults to `true`.
 
-1. **Identify routine task** — Match against delegation rules above
-2. **Gather context** — Read relevant files if needed
-3. **Invoke OpenCode** — Use configured free model
-4. **Validate output** — Check for correctness before using
-5. **Apply or return** — Write to file or pass back to conversation
+Never pass `auto_approve: true` to `delegate_task`.
 
-### Invocation Pattern
+## Delegate or keep
 
-```bash
-# Basic invocation
-opencode run --model <model-name> "<prompt>"
+| Delegate | Keep in Claude |
+| --- | --- |
+| boilerplate, types, Zod schemas and validators, CRUD models, test fixtures and scaffolding, docstrings and JSDoc, README sections, formatting, mechanical refactors | auth, security, payments and billing, PII, architecture, business rules, debugging, performance, code review |
 
-# With file context
-opencode run --model <model-name> "$(cat src/types.ts)" "<prompt>"
+A request that mixes both: delegate the routine part and do the rest yourself. Details and worked cases: [delegation-boundaries.md](references/delegation-boundaries.md).
 
-# Recommended free models
-opencode run --model glm/glm-4 "<prompt>"
-opencode run --model github-copilot/gpt-4.1 "<prompt>"
-```
+## Delegation step
 
-### Example Delegations
+1. Call `delegate_task` with:
+   - `task`: the goal, the files to create or change, the conventions to match (name an example file), and the check that proves it is done.
+   - `directory`: the absolute path of the narrowest directory that holds those files. The delegate writes files and runs commands inside `directory`.
+   - `model`: omit it to use the configured default. To choose one, call `list_models`.
+2. Run `git diff` as its own command, then open every new or changed file with Read. Do this after every delegation, before relying on the output.
+3. Run the project's checks (type checker, tests).
+4. Accept the result, fix small defects yourself, or redo the work if it is wrong. Tell the user what was delegated.
 
-**Generate TypeScript interface:**
-```bash
-opencode run --model glm/glm-4 "Generate TypeScript interface for a User with id, email, name, createdAt, updatedAt fields"
-```
+## If the tools are missing
 
-**Create Zod schema:**
-```bash
-opencode run --model glm/glm-4 "Create Zod validation schema for email, password (min 8 chars), and optional phone number"
-```
+If `delegate_task` is not in your tool list, do the work directly. Do not install or run OpenCode or the server. Mention [setup.md](references/setup.md) to the user once.
 
-**Refactor to early returns:**
-```bash
-opencode run --model github-copilot/gpt-4.1 "Refactor this function to use early returns: $(cat src/utils/validate.ts)"
-```
+## Red flags
 
-**Generate test fixtures:**
-```bash
-opencode run --model glm/glm-4 "Generate 5 test fixtures for User objects with realistic fake data"
-```
-
-## Model Selection
-
-Choose model based on task:
-
-| Task Type | Recommended Model | Why |
-|-----------|------------------|-----|
-| TypeScript/JS | github-copilot/gpt-4.1 | Strong TS inference |
-| Python | glm/glm-4 | Good Python patterns |
-| Documentation | glm/glm-4 | Natural language strength |
-| General boilerplate | Any free model | All handle well |
-
-See [model-capabilities.md](references/model-capabilities.md) for detailed comparison.
-
-## Configuration
-
-Requires OpenCode MCP server. See [mcp-config-template.json](references/mcp-config-template.json) for setup.
-
-## Fallback Chain
-
-If primary model fails:
-1. Try next model in configured list
-2. If all fail, escalate back to Claude
-3. Log failure for debugging
-
-## Validation Checklist
-
-Before using delegated output:
-- [ ] Syntax is correct (no obvious errors)
-- [ ] Types are accurate (if TypeScript)
-- [ ] Follows project conventions
-- [ ] No security issues introduced
-- [ ] Imports are correct
-
-## When NOT to Delegate
-
-Stop and keep in Claude if task involves:
-- Decisions about *what* to build (not just *how*)
-- Security boundaries or auth logic
-- Complex conditional logic
-- Domain-specific business rules
-- Code that touches sensitive data
-- Anything you'd want a senior engineer to review
+You are about to Write or Edit a file for a delegate-list task and have not called `delegate_task`. Stop and delegate.
