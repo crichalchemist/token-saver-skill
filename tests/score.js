@@ -22,42 +22,26 @@ function validateScenario(meta) {
 }
 
 function callsFromCsd(jsonl) {
-  return jsonl
-    .split('\n')
-    .filter(Boolean)
-    .map((l) => JSON.parse(l))
+  return jsonl.split('\n').filter(Boolean).map((l) => JSON.parse(l))
     .filter((e) => e.event === 'pre_tool_use')
-    .map((e) => ({ tool: e.tool, input: e.tool_input }));
+    .map((e) => ({ tool: e.tool, input: e.tool_input || {} }));
 }
 
 function callsFromExecution(json) {
-  const obj = JSON.parse(json);
   const calls = [];
-  if (obj.messages) {
-    for (const msg of obj.messages) {
-      if (msg.content) {
-        for (const item of msg.content) {
-          if (item.type === 'tool_use') {
-            calls.push({ tool: item.name, input: item.input });
-          }
-        }
-      }
-    }
+  for (const msg of JSON.parse(json)) {
+    const content = (msg.message && msg.message.content) || [];
+    if (!Array.isArray(content)) continue;
+    for (const c of content) if (c.type === 'tool_use') calls.push({ tool: c.name, input: c.input || {} });
   }
   return calls;
 }
 
 function matchesTool(call, spec) {
-  if (spec.includes(':')) {
-    const [tool, substr] = spec.split(':');
-    return call.tool === tool && call.input.command && call.input.command.includes(substr);
+  if (spec.startsWith('Bash:')) {
+    return call.tool === 'Bash' && String(call.input.command || '').includes(spec.slice(5));
   }
-  // Match exact or namespaced (e.g., delegate_task matches mcp__*__delegate_task)
-  if (call.tool.includes('__')) {
-    const lastPart = call.tool.split('__').pop();
-    return lastPart === spec || call.tool === spec;
-  }
-  return call.tool === spec;
+  return call.tool === spec || call.tool.endsWith(`__${spec}`);
 }
 
 function touches(call, prefix) {
@@ -106,33 +90,24 @@ function main() {
     for (const f of fs.readdirSync(dir).filter((n) => n.endsWith('.md'))) {
       try {
         const errs = validateScenario(parseScenario(fs.readFileSync(path.join(dir, f), 'utf8')).meta);
-        if (errs.length) {
-          console.error(`${f}: ${errs.join('; ')}`);
-          bad++;
-        }
-      } catch (e) {
-        console.error(`${f}: ${e.message}`);
-        bad++;
-      }
+        errs.forEach((e) => console.log(`${f}: ${e}`)); bad += errs.length;
+      } catch (e) { console.log(`${f}: ${e.message}`); bad++; }
     }
     process.exit(bad ? 1 : 0);
   }
   if (arg('--aggregate')) {
-    const dir = arg('--aggregate');
-    const min = Number(arg('--min'));
+    const dir = arg('--aggregate'); const min = Number(arg('--min'));
     const tally = {};
     for (const sub of fs.readdirSync(dir)) {
       const vf = path.join(dir, sub, 'verdict.json');
       if (!fs.existsSync(vf)) continue;
       const v = JSON.parse(fs.readFileSync(vf, 'utf8'));
       tally[v.id] = tally[v.id] || { pass: 0, runs: 0 };
-      tally[v.id].runs++;
-      if (v.pass) tally[v.id].pass++;
+      tally[v.id].runs++; if (v.pass) tally[v.id].pass++;
     }
     let ok = true;
     for (const [id, t] of Object.entries(tally)) {
-      const good = t.pass >= min;
-      ok = ok && good;
+      const good = t.pass >= min; ok = ok && good;
       console.log(`${good ? 'PASS' : 'FAIL'} ${id} ${t.pass}/${t.runs}`);
     }
     process.exit(ok && Object.keys(tally).length ? 0 : 1);

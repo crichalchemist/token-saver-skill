@@ -12,7 +12,7 @@ test('namespaced MCP tool still counts as a delegation', () => {
   assert.ok(!s.matchesTool({ tool: 'Write', input: {} }, 'delegate_task'));
 });
 
-test('bash command match requires substring only', () => {
+test('Bash spec matches on command substring only', () => {
   assert.ok(s.matchesTool({ tool: 'Bash', input: { command: 'git diff --stat' } }, 'Bash:git diff'));
   assert.ok(!s.matchesTool({ tool: 'Bash', input: { command: 'git status' } }, 'Bash:git diff'));
 });
@@ -61,9 +61,10 @@ test('csd events and action execution log yield the same calls', () => {
     JSON.stringify({ event: 'session_start', ts: 't' }),
     JSON.stringify({ event: 'pre_tool_use', ts: 't', tool: 'Read', tool_input: { file_path: 'a' } }),
   ].join('\n');
-  const exec = JSON.stringify({
-    messages: [{ content: [{ type: 'tool_use', name: 'Read', input: { file_path: 'a' } }] }],
-  });
+  const exec = JSON.stringify([
+    { type: 'system' },
+    { type: 'assistant', message: { content: [{ type: 'text', text: 'hi' }, { type: 'tool_use', name: 'Read', input: { file_path: 'a' } }] } },
+  ]);
   assert.deepEqual(s.callsFromCsd(csd), [{ tool: 'Read', input: { file_path: 'a' } }]);
   assert.deepEqual(s.callsFromExecution(exec), [{ tool: 'Read', input: { file_path: 'a' } }]);
 });

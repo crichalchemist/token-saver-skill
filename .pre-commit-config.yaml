@@ -42,4 +42,10 @@ repos:
         entry: node tests/score.js --validate tests/scenarios
         language: system
         pass_filenames: false
-        files: ^tests/scenarios/
+        files: ^tests/(scenarios/|score\.js)
+      - id: unit-tests
+        name: node unit tests
+        entry: bash -c 'node --test tests/*.test.js'
+        language: system
+        pass_filenames: false
+        files: ^tests/.*\.js$
