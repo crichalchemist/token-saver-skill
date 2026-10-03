@@ -16,6 +16,7 @@ for rep in $(seq 1 "$REPS"); do
   bash "$ROOT/tests/prepare-run.sh" "$SCEN" "$SKILL" "$RUN" >/dev/null
   if ! (cd "$RUN" && timeout 900 claude -p "$(cat PROMPT.md)" \
         --output-format stream-json --verbose --max-turns 40 \
+        --permission-mode default \
         --mcp-config "$RUN/mcp.json" --strict-mcp-config \
         --allowedTools "$TOOLS" < /dev/null > "$OUT/stream.jsonl"); then
     echo "claude exited non-zero" > "$OUT/notes.txt"
