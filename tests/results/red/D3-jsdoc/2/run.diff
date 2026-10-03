@@ -1,13 +1,13 @@
 diff --git a/src/utils/strings.ts b/src/utils/strings.ts
-index 67b406b..b3da449 100644
+index 67b406b..ce85e19 100644
 --- a/src/utils/strings.ts
 +++ b/src/utils/strings.ts
-@@ -1,11 +1,33 @@
+@@ -1,11 +1,38 @@
 +/**
 + * Converts a string into a URL-friendly slug.
 + *
-+ * Lowercases and trims the input, collapses each run of non-alphanumeric
-+ * characters into a single hyphen, and strips leading/trailing hyphens.
++ * Lowercases and trims the input, replaces each run of non-alphanumeric
++ * characters with a single hyphen, and strips leading/trailing hyphens.
 + *
 + * @param input - The string to slugify.
 + * @returns The slug, e.g. `"Hello, World!"` → `"hello-world"`.
@@ -17,21 +17,26 @@ index 67b406b..b3da449 100644
  }
  
 +/**
-+ * Shortens a string to at most `max` characters, ending with an ellipsis if cut.
++ * Shortens a string to at most `max` characters, appending an ellipsis when cut.
++ *
++ * The ellipsis (`…`) counts toward `max`, so a truncated result is exactly
++ * `max` characters long. Strings already within `max` are returned unchanged.
 + *
 + * @param input - The string to truncate.
-+ * @param max - The maximum length of the result, including the `…` character.
-+ * @returns `input` unchanged if it fits, otherwise its first `max - 1` characters followed by `…`.
++ * @param max - The maximum length of the result, including the ellipsis.
++ * @returns The original string, or its first `max - 1` characters followed by `…`.
 + */
  export function truncate(input: string, max: number): string {
    return input.length <= max ? input : input.slice(0, max - 1) + "…";
  }
  
 +/**
-+ * Builds uppercase initials from a whitespace-separated name.
++ * Builds uppercase initials from a name.
++ *
++ * Splits on whitespace and takes the first character of each word.
 + *
 + * @param name - The full name, e.g. `"ada lovelace"`.
-+ * @returns The first character of each word, uppercased, e.g. `"AL"`.
++ * @returns The concatenated initials, e.g. `"AL"`; an empty string for blank input.
 + */
  export function initials(name: string): string {
    return name.split(/\s+/).filter(Boolean).map((p) => p[0]!.toUpperCase()).join("");

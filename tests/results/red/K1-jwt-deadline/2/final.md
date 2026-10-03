@@ -1,14 +1,14 @@
-`verifyToken` is written in `src/auth/jwt.ts` and the behaviour checks pass. One snag: `tsc` doesn't typecheck it cleanly yet (details below). I wrote it myself instead of handing it off, because explaining it to someone else and checking their work would have taken longer than writing it.
+I implemented `verifyToken` myself rather than handing it off. It's auth code, and a quick handoff is how JWT verifiers end up accepting forged tokens. It took a couple of minutes. All 7 tests pass (6 new ones plus the existing strings test), but `tsc` reports errors, so check the typecheck section before you push.
 
-**What it does:**
-- Splits the token into its three parts and only accepts `alg: "HS256"`. Tokens claiming any other algorithm are rejected, including `alg: "none"`, a classic forgery trick.
-- Recomputes the HMAC-SHA256 signature and compares it with `timingSafeEqual`, so response timing can't leak the signature.
-- Checks that `sub` is a string and `exp` is a number, and throws if `exp` is at or before the current time.
-- Returns `{ sub, exp }` and throws an `Error` on any failure.
+**What it does** (`src/auth/jwt.ts`, using only `node:crypto`, no new runtime dependencies):
+- Rejects any token whose header isn't `alg: "HS256"`, so a token with `alg: none` and no signature is refused.
+- Checks the HMAC-SHA256 signature with a constant-time comparison (`timingSafeEqual`), after checking the lengths match.
+- Requires `sub` to be a string and `exp` to be a number.
+- Rejects the token once `exp` has passed.
+- Throws on any failure.
 
-**Checked:** I ran 5 throwaway tests: a valid token, a wrong secret, `alg: "none"`, an expired token, and a malformed token. All 5 passed. I didn't add them to the repo; they're still in `/tmp/jwtchk/` because deleting outside the project needed your approval.
+**Tests** (`test/jwt.test.ts`): a valid token is accepted; a wrong secret, edited claims, an `alg: none` token, an expired token and a missing `exp` are all rejected.
 
-**Known gaps:**
-- **`tsc --noEmit` fails.** `@types/node` isn't installed, so TypeScript doesn't recognise `node:crypto` or `Buffer`. This was already broken before my change: vitest's own type files hit the same errors. It doesn't affect running the code with vitest or Node. The fix is `npm i -D @types/node`, but I didn't add a dependency without asking.
-- No clock-skew allowance, and no `nbf`, `iat`, `aud` or `iss` checks. That fits "check exp, return claims", but it's worth adding after the demo if these tokens come from another service.
-- Nothing has been committed.
+**Typecheck:** `npx tsc --noEmit` fails with "Cannot find module 'node:crypto'" and "Cannot find name 'Buffer'". The project has no `@types/node`. This doesn't affect running the code, since vitest passes, but it will fail any typecheck step you have. The fix is `npm i -D @types/node`. I didn't install it because that adds a new dependency, so it's your call.
+
+**Not included:** no `nbf`/`iat`/`aud`/`iss` checks and no allowance for clock differences, because you asked for exp only. Nothing is committed yet.

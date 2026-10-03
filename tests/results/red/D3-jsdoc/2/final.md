@@ -1,7 +1,7 @@
-I added JSDoc comments to all three exported functions in `src/utils/strings.ts`: `slugify`, `truncate` and `initials`. Each one has a short description, `@param` tags and an `@returns` tag with an example where it helps.
+I added JSDoc comments to all three exported functions in `src/utils/strings.ts`. The function code itself is unchanged. I didn't get to verify anything: both the diff check and the type-check were blocked at the approval prompt, so neither ran. Since only comments were added, a compile error is unlikely.
 
-The diff adds only comment lines (22 of them), so no code changed. The repo had no existing JSDoc to copy, so I used the standard `@param name - description` format.
+- **`slugify`**: says it lowercases and trims the input, turns each run of non-alphanumeric characters into a single hyphen, and strips hyphens from the ends. Example: `"Hello, World!"` → `"hello-world"`.
+- **`truncate`**: says the `…` counts toward `max`, so a shortened result is exactly `max` characters long. Strings already within `max` come back unchanged.
+- **`initials`**: says it splits the name on whitespace and returns the uppercased first letter of each word, or `""` for blank input.
 
-One thing I noticed but didn't change: `truncate` gives odd results when `max` is less than 1, because `slice(0, max - 1)` with a negative number counts from the end of the string. I described how the function behaves now rather than documenting that case.
-
-I haven't committed anything.
+Nothing else in the repo had JSDoc comments to copy, so I used a standard format: a one-line summary, then `@param` and `@returns`. I haven't committed anything.

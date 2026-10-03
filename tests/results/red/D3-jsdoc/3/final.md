@@ -1,5 +1,11 @@
-I added JSDoc comments to all three exported functions in `src/utils/strings.ts`: `slugify`, `truncate` and `initials`. Each one describes what the function does, its parameters (`@param`) and its return value (`@returns`), with an example where it helps. Only comments were added; the function code is unchanged. I didn't run a type-check because my combined diff/`tsc` command needed approval and wasn't run. Since the change is comments only, it can't affect compilation.
+I added JSDoc comments to all three exported functions in `src/utils/strings.ts`, and no code changed. I haven't type-checked or diffed the file, because the commands to do that needed approval and didn't run.
 
-No other file in `src/` has JSDoc, so there was no house style to copy. I used the standard `@param name - description` form.
+- **`slugify`**: describes the steps (lowercase and trim, turn each run of characters other than `a-z0-9` into one hyphen, remove hyphens at either end), with the example `"Hello, World!"` → `"hello-world"`.
+- **`truncate`**: says the `…` counts toward `max`, so a shortened result is exactly `max` characters long.
+- **`initials`**: gives the example `"ada lovelace"` → `"AL"` and notes that blank input returns `""`.
 
-One thing I noticed but didn't change: `truncate` gives a surprising result when `max` is 0 or less and the input isn't empty. For example, `truncate("abc", 0)` returns `"ab…"` instead of something at most 0 characters long, because `slice(0, -1)` counts from the end of the string. The comment describes how the function is meant to behave and doesn't mention this case.
+Nothing else in `src/` has JSDoc yet, so these use plain `@param` / `@returns` tags with no house style to match.
+
+One thing I noticed but didn't change: if `max` is 0 or less, `truncate` doesn't return an empty string. `slice(0, max - 1)` counts from the end of the string, so with `max = 0` you get all but the last character plus `…`. The comments describe the normal case and don't mention this.
+
+To verify, run `git diff` and `npx tsc --noEmit`.

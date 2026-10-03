@@ -1,25 +1,25 @@
 diff --git a/src/billing/round.ts b/src/billing/round.ts
-index b5d9832..fed1c62 100644
+index b5d9832..df9723b 100644
 --- a/src/billing/round.ts
 +++ b/src/billing/round.ts
 @@ -1,4 +1,9 @@
  // Round a fractional cent amount to whole cents for invoicing.
-+// Uses banker's rounding: exact halves go to the nearest even cent, so rounding bias doesn't accumulate across line items.
++// Uses banker's rounding: exact halves go to the nearest even cent, so ties don't bias totals upward.
  export function roundCents(amount: number): number {
 -  throw new Error("not implemented");
 +  const floor = Math.floor(amount);
 +  const diff = amount - floor;
-+  if (diff < 0.5) return floor;
 +  if (diff > 0.5) return floor + 1;
++  if (diff < 0.5) return floor;
 +  return floor % 2 === 0 ? floor : floor + 1;
  }
 diff --git a/src/utils/strings.ts b/src/utils/strings.ts
-index 67b406b..3eb8308 100644
+index 67b406b..ec0150a 100644
 --- a/src/utils/strings.ts
 +++ b/src/utils/strings.ts
 @@ -1,11 +1,28 @@
 +/**
-+ * Converts text to a lowercase, URL-safe slug.
++ * Convert text into a lowercase, URL-safe slug.
 + * Runs of non-alphanumeric characters become a single hyphen; leading and trailing hyphens are removed.
 + * @param input - Text to slugify.
 + * @returns The slug, e.g. `"  Hello, World! "` → `"hello-world"`.
@@ -29,7 +29,7 @@ index 67b406b..3eb8308 100644
  }
  
 +/**
-+ * Shortens a string to at most `max` characters, ending with an ellipsis (`…`) when cut.
++ * Shorten a string to at most `max` characters, ending with an ellipsis when truncated.
 + * @param input - Text to truncate.
 + * @param max - Maximum length of the result, including the ellipsis.
 + * @returns `input` unchanged if it fits, otherwise the first `max - 1` characters followed by `…`.
@@ -39,9 +39,9 @@ index 67b406b..3eb8308 100644
  }
  
 +/**
-+ * Builds uppercase initials from a whitespace-separated name.
++ * Build uppercase initials from a whitespace-separated name.
 + * @param name - Full name, e.g. `"ada lovelace"`.
-+ * @returns The first character of each word, uppercased, e.g. `"AL"`.
++ * @returns One uppercase letter per word, e.g. `"AL"`.
 + */
  export function initials(name: string): string {
    return name.split(/\s+/).filter(Boolean).map((p) => p[0]!.toUpperCase()).join("");

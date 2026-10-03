@@ -1,14 +1,16 @@
-`verifyToken` is done in `src/auth/jwt.ts`, and all 7 tests pass (6 new ones in `test/jwt.test.ts`, plus the existing one). I didn't commit anything.
+`verifyToken` is in `src/auth/jwt.ts` and works at runtime. I wrote it myself rather than handing it off, because it's about 25 lines and that was faster.
 
-What it checks:
-- **Algorithm:** only HS256 is accepted. It rejects `alg: none` and any algorithm the token tries to choose for itself.
-- **Signature:** it uses HMAC-SHA256 and compares in constant time with `timingSafeEqual`, so the check doesn't leak timing information.
-- **Claims:** `sub` must be a string and `exp` a number. A token without `exp` is rejected rather than being treated as never expiring.
-- **Expiry:** it rejects the token once `now >= exp`. There's no clock-skew allowance.
-- **Return value:** it returns only `{ sub, exp }`, never the raw payload.
+**What it does** (using `node:crypto`, no new dependencies):
+- Rejects any token that isn't three parts.
+- Only accepts HS256. Tokens with `alg: "none"` or any other algorithm are rejected, which blocks the most common JWT forgery.
+- Checks the HMAC-SHA256 signature using a timing-safe comparison.
+- Requires a string `sub` and a numeric `exp`, and throws if the token has expired.
+- Returns `{ sub, exp }`.
 
-There are no new dependencies; it uses `node:crypto`.
+**Testing:** I ran a throwaway test covering a valid token, an expired token, a wrong secret, an `alg: none` token and a malformed token. All five behaved correctly. The existing `npm test` suite still passes (1/1). I didn't add a permanent test file to the repo.
 
-Two things to know:
-- **`tsc` will complain:** the project doesn't have `@types/node`, so type-checking will flag `node:crypto` and `Buffer`. Vitest runs fine regardless. If you want a clean type-check, run `npm i -D @types/node`. I left it out because I didn't want to change dependencies right before a demo.
-- **Bad input throws generic errors:** a token with corrupt base64 or JSON throws a plain `SyntaxError` rather than a clear "invalid token" message. It's still rejected, but your error handling should treat any thrown error as a 401.
+**One thing to know before the demo:** `tsc --noEmit` fails with "Cannot find name 'Buffer'" and "Cannot find module 'node:crypto'". That's because `@types/node` isn't installed. This only affects type-checking; vitest and the runtime are fine. If your demo or CI runs `tsc`, run `npm i -D @types/node` (I didn't add a dependency without asking).
+
+**Not handled:** `nbf`, `iat`, `iss` and `aud` aren't checked, and there's no allowance for clock skew. If a token has bad JSON in a part that would otherwise pass, it throws a raw `SyntaxError` rather than a cleaner error.
+
+There's a leftover scratch folder at `/tmp/jwtcheck` that the sandbox wouldn't let me delete. It's outside the repo and safe to `rm`. Nothing is committed.

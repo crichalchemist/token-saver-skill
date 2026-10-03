@@ -1,10 +1,7 @@
-I created `test/fixtures/users.ts`, which exports `users: User[]` with 20 entries. It imports the `User` type from `src/models/user.ts`, and the file typechecks cleanly under strict mode.
+I've created `test/fixtures/users.ts`. It exports `users: User[]`, an array of 20 users built on the `User` interface in `src/models/user.ts`, and the project typechecks cleanly with `tsc`.
 
-- **Fixed values:** all the data is hard-coded, so tests get the same users every run.
-- **IDs and emails:** each user has a different UUID-style `id` and a different email. All emails use `example.com`, a domain reserved for examples, so none of them is a real address.
-- **Names:** a realistic mix, including some that tend to catch bugs: accents (José García, Thomas Müller), an apostrophe (Siobhán O'Brien), hyphens (Anna-Maria Schmidt) and a three-part name (Mei Lin Wong).
-- **Dates:** spread across 2024 in UTC, with `updatedAt` never earlier than `createdAt`. About half the users were never edited (`updatedAt === createdAt`).
+- **IDs:** each is a fixed UUID-style string ending in `…4e01` to `…4e20`, so you can find a user by its ID easily.
+- **Names and emails:** a mix of international names, including accented ones (Sofía Martínez, Jonas Müller, Chloé Dubois) and one with an apostrophe (Ethan O'Connor). Every email is on `example.com`, so none can reach a real address.
+- **Dates:** sign-ups run from January to December 2024, in order. `updatedAt` is never earlier than `createdAt`, and a few users have never been updated (both dates are the same).
 
-Running `tsc -p .` on the whole project fails, but every error is inside `node_modules` (vite/vitest/rollup type files). The cause is that `@types/node` isn't installed and `skipLibCheck` isn't set. I didn't change anything for this. Adding `"skipLibCheck": true` to `tsconfig.json` would fix it if you want.
-
-I haven't committed anything.
+I checked by eye that the IDs and emails are unique and the dates are in order; I didn't run a script to confirm it. I didn't commit the file.

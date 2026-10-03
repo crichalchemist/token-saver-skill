@@ -1,14 +1,9 @@
-I created `test/fixtures/users.ts`, which exports `users: User[]` with 20 entries matching the `User` interface in `src/models/user.ts`.
+I created `test/fixtures/users.ts`, which exports `users: User[]` with 20 users built from the `User` interface in `src/models/user.ts`. `tsc` runs with no errors.
 
-**What's in it:**
-- **Names:** 20 people from a range of backgrounds, including some with accents and an apostrophe (`Sofía Martínez`, `Ethan O'Connor`) so string handling gets tested.
-- **Emails:** in the form `first.last@example.com`. `example.com` is reserved for examples, so no real addresses are used.
-- **IDs:** UUID-shaped and ending in `…6a01`–`…6a20`, so you can tell which user a test failure refers to.
-- **Dates:** fixed ISO dates spread across 2024–2025, so tests give the same result every run. Some users have `updatedAt === createdAt` (never updated) and others have later updates.
+- **IDs:** `usr_01` through `usr_20`, all different.
+- **Emails:** every one is different and uses a reserved `example.*` domain, so no real address can be emailed by mistake.
+- **Names:** a mix of nationalities, including accents and apostrophes (Sofía Ramírez, Ethan O'Connor), which helps test string handling.
+- **Dates:** fixed ISO timestamps, so test results don't change from run to run. `createdAt` spans Jan–Nov 2024, and `updatedAt` is never earlier than `createdAt`. A few users have the two equal, which covers accounts that have never been updated.
+- **Import style:** a type-only import with double quotes and semicolons, matching `test/strings.test.ts`.
 
-**Checks:**
-- The file typechecks on its own in strict mode with the project's tsconfig settings, apart from skipping library checks (needed for the issue below).
-- A full `npx tsc -p .` fails with about 60 errors, all inside `node_modules` (vite, vitest, rollup) because `@types/node` isn't installed. This was already the case before my change, and none of the errors are in project files. To fix it, install `@types/node` or set `skipLibCheck: true` in `tsconfig.json`; I left both alone.
-- The file isn't named `*.test.ts`, so vitest won't try to run it as a test.
-
-I haven't committed anything.
+I haven't committed the file.

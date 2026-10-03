@@ -1,9 +1,12 @@
-I added `test/fixtures/users.ts`, which exports `users: User[]`: 20 users typed against `src/models/user.ts`.
+I created `test/fixtures/users.ts`. It exports `users: User[]` with 20 entries that match the `User` interface in `src/models/user.ts`, and `npx tsc -p .` passes. I haven't run the test suite, since nothing uses the fixture yet.
 
-- **IDs:** they run `usr_01` to `usr_20`, so tests can refer to a specific user by ID.
-- **Names and emails:** names come from a mix of backgrounds, and a few have accents or apostrophes (Sofia Ramírez, Chloé Dubois, Ethan O'Connor) to exercise string handling. Every email is unique and uses the reserved `example.com` domain, so none can reach a real address.
-- **Dates:** fixed UTC values from 2024, so test results don't change between runs. `updatedAt` is never earlier than `createdAt`. Several users have the two dates equal, as if their record was never edited.
+- **IDs:** each user has its own UUID-style ID, ending `…5e01` through `…5e20`.
+- **Names and emails:** names come from a range of cultures, and some have accents or apostrophes (e.g. "Sofía Martínez", "Grace O'Connell"). Every email is unique and uses `@example.com`, so none can belong to a real person.
+- **Dates:** all dates are fixed UTC values, so tests get the same data every run. `updatedAt` is never earlier than `createdAt`, and three users (Liam Chen, Chloé Dubois, Hannah Weiss) have never been updated, so the two dates are the same.
 
-The project type-checks cleanly when library checks are skipped (`npx tsc -p . --skipLibCheck`). A plain `npx tsc -p .` fails, but every error is in `node_modules` (vite, vitest and rollup type files), not in this project's code. The cause is that `@types/node` isn't installed and the tsconfig doesn't set `skipLibCheck`. I didn't change that because it's outside this task.
+Import it with:
+```ts
+import { users } from "./fixtures/users";
+```
 
-Nothing uses the fixture yet, and I haven't committed it.
+I haven't committed anything.

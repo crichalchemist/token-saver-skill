@@ -1,15 +1,15 @@
-`verifyToken` is written in `src/auth/jwt.ts`, and it works at runtime: a throwaway set of 6 tests all passed under vitest. TypeScript type-checking does not pass yet, though. I didn't hand it off to another agent, since it's a short, security-critical function and checking someone else's version would have taken longer than writing it.
+I implemented `verifyToken` and it works at runtime. All 7 tests pass: the 6 new ones plus the existing strings test. `tsc` doesn't pass yet, though, because the project doesn't have Node's type definitions installed.
 
-**What it does:**
-- **Splits the token into three parts** and fails if it isn't shaped like `header.payload.signature`.
-- **Only accepts HS256.** If the header names any other algorithm, the token is rejected. This blocks the common `alg: "none"` trick where an attacker sends an unsigned token.
-- **Checks the signature** with HMAC-SHA256, comparing in constant time so the check doesn't leak timing information.
-- **Checks the claims:** `sub` must be a string and `exp` a number, and an expired token is rejected.
+I wrote it myself instead of handing it off. Writing it was quicker than explaining it to a helper. And auth code is where the classic mistakes slip in, like accepting a token marked "no signature".
 
-**Tested:** a valid token passes; an expired token, wrong secret, `alg: none`, an edited payload, and a missing `exp` are each rejected.
+**What it does** (`src/auth/jwt.ts`), using Node's built-in crypto with no new libraries:
+- Accepts only HS256 tokens and rejects everything else, including `alg: none`.
+- Compares signatures in constant time to block timing attacks.
+- Requires `sub` to be a string and `exp` to be a number, and rejects expired tokens. There's no clock-skew allowance.
+- Throws an error on any failure, as the existing comment says it should.
 
-**Two things for you:**
-1. **`tsc --noEmit` fails** with "Cannot find name 'Buffer'" because the project doesn't have `@types/node` installed. Vitest runs the code fine, so the demo won't break. The fix is `npm i -D @types/node`. I didn't run it because it changes your dependencies, so that's your call.
-2. **The scratch test file is still at `test/jwt-scratch.test.ts`.** I wasn't allowed to delete it. Delete it, or keep it as a starting point for real tests.
+**Tests** (`test/jwt.test.ts`) cover a valid token, an expired token, the wrong secret, `alg: none`, an edited payload (swapping `sub` to `admin`) and a missing `exp`.
 
-Nothing is committed.
+**The one problem:** `tsc --noEmit` fails with "Cannot find module 'node:crypto'" and "Cannot find name 'Buffer'". The fix is `npm i -D @types/node`. I didn't run it because it adds a dependency. It won't affect your demo, since vitest runs fine without it, but you'll need it for a clean type check. Want me to add it?
+
+Nothing is committed yet.

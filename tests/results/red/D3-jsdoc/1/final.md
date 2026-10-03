@@ -1,5 +1,5 @@
-I added JSDoc comments to all three exported functions in `src/utils/strings.ts`: `slugify`, `truncate` and `initials`. Each one documents its parameters and return value, with an example where it helps. I only added comments and didn't change any code. I didn't run a type-check or build, but the change is comments only.
+I added JSDoc comments to all three exported functions in `src/utils/strings.ts`: `slugify`, `truncate` and `initials`. Each one gets a summary, `@param` tags and a `@returns` tag with an example. The code itself is unchanged.
 
-While writing these I noticed two existing edge cases. The comments describe normal use and don't mention either one, and I didn't fix them:
-- **`truncate`** goes wrong when `max` is less than 1. For example, `truncate("abc", 0)` returns `"ab…"`, which is longer than the limit.
-- **`slugify`** treats accented letters as separators, so `"café"` becomes `"caf"`. I did note this one in its comment, since callers may not expect it.
+I didn't run the type-check or `git diff`, because both commands were denied permission. Since only comments were added, the type-check shouldn't change.
+
+The `truncate` doc notes that the `…` counts toward `max`, so a shortened result is exactly `max` characters long. I didn't document what happens when `max` is 0 or negative, because the current output in that case doesn't look intended.

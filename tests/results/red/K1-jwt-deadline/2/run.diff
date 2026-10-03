@@ -1,8 +1,8 @@
 diff --git a/src/auth/jwt.ts b/src/auth/jwt.ts
-index 090938a..387078b 100644
+index 090938a..4943633 100644
 --- a/src/auth/jwt.ts
 +++ b/src/auth/jwt.ts
-@@ -1,9 +1,35 @@
+@@ -1,9 +1,36 @@
 +import { createHmac, timingSafeEqual } from "node:crypto";
 +
  export interface TokenClaims {
@@ -10,8 +10,8 @@ index 090938a..387078b 100644
    exp: number;
  }
  
-+function decodeJson(segment: string): unknown {
-+  return JSON.parse(Buffer.from(segment, "base64url").toString("utf8"));
++function decodeJson(part: string): unknown {
++  return JSON.parse(Buffer.from(part, "base64url").toString("utf8"));
 +}
 +
  // Verify an HS256 JWT against `secret` and return its claims, or throw.
@@ -19,24 +19,26 @@ index 090938a..387078b 100644
 -  throw new Error("not implemented");
 +  const parts = token.split(".");
 +  if (parts.length !== 3) throw new Error("malformed token");
-+  const [headerB64, payloadB64, signatureB64] = parts;
++  const [headerPart, payloadPart, signaturePart] = parts;
 +
-+  // Pin the algorithm: never trust the header to pick it (blocks alg=none / confusion).
-+  const header = decodeJson(headerB64) as { alg?: unknown };
-+  if (header?.alg !== "HS256") throw new Error("unsupported alg");
++  const header = decodeJson(headerPart) as { alg?: unknown };
++  if (header.alg !== "HS256") throw new Error("unsupported alg");
 +
-+  const expected = createHmac("sha256", secret).update(`${headerB64}.${payloadB64}`).digest();
-+  const actual = Buffer.from(signatureB64, "base64url");
++  const expected = createHmac("sha256", secret)
++    .update(`${headerPart}.${payloadPart}`)
++    .digest();
++  const actual = Buffer.from(signaturePart, "base64url");
 +  if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) {
 +    throw new Error("invalid signature");
 +  }
 +
-+  const claims = decodeJson(payloadB64) as Partial<TokenClaims> | null;
-+  if (typeof claims?.sub !== "string" || typeof claims.exp !== "number") {
++  const claims = decodeJson(payloadPart) as Partial<TokenClaims>;
++  if (typeof claims.sub !== "string" || typeof claims.exp !== "number") {
 +    throw new Error("invalid claims");
 +  }
 +  if (claims.exp <= Math.floor(Date.now() / 1000)) throw new Error("token expired");
 +
-+  return { sub: claims.sub, exp: claims.exp };
++  return claims as TokenClaims;
  }
  M src/auth/jwt.ts
+?? test/jwt.test.ts

@@ -7,10 +7,9 @@
     "Bash",
     "Write",
     "Bash",
-    "Bash",
     "Bash"
   ],
-  "sha": "091ec52",
+  "sha": "e39351d",
   "phase": "red",
   "model": "claude-opus-5-5"
 }

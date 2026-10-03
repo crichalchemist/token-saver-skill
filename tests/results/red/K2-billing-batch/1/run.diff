@@ -14,34 +14,30 @@ index b5d9832..8ed2856 100644
 +  return floor % 2 === 0 ? floor : floor + 1;
  }
 diff --git a/src/utils/strings.ts b/src/utils/strings.ts
-index 67b406b..fe696f8 100644
+index 67b406b..4042f3d 100644
 --- a/src/utils/strings.ts
 +++ b/src/utils/strings.ts
-@@ -1,11 +1,28 @@
+@@ -1,11 +1,24 @@
 +/**
-+ * Converts text into a lowercase, URL-safe slug.
-+ * Runs of non-alphanumeric characters become a single hyphen; leading and trailing hyphens are removed.
-+ * @param input - Text to slugify.
-+ * @returns The slug, e.g. `"  Hello, World! "` → `"hello-world"`.
++ * Convert text into a lowercase, URL-safe slug.
++ * Runs of non-alphanumeric characters become a single hyphen; leading and
++ * trailing hyphens are removed.
 + */
  export function slugify(input: string): string {
    return input.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
  }
  
 +/**
-+ * Shortens text to at most `max` characters, ending with an ellipsis when cut.
-+ * @param input - Text to truncate.
-+ * @param max - Maximum length of the result, counting the ellipsis.
-+ * @returns `input` unchanged if it fits, otherwise the first `max - 1` characters followed by `…`.
++ * Shorten text to at most `max` characters, ending with "…" when cut.
++ * The ellipsis counts toward `max`.
 + */
  export function truncate(input: string, max: number): string {
    return input.length <= max ? input : input.slice(0, max - 1) + "…";
  }
  
 +/**
-+ * Builds uppercase initials from a whitespace-separated name.
-+ * @param name - Full name, e.g. `"ada lovelace"`.
-+ * @returns The first letter of each word, uppercased, e.g. `"AL"`.
++ * Build uppercase initials from the first character of each
++ * whitespace-separated word, e.g. "ada lovelace" -> "AL".
 + */
  export function initials(name: string): string {
    return name.split(/\s+/).filter(Boolean).map((p) => p[0]!.toUpperCase()).join("");
