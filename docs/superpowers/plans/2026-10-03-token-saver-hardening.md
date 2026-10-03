@@ -4,9 +4,9 @@
 
 **Goal:** Rebuild `token-saver` as a public, evidence-tested skill that delegates routine coding work to free OpenCode models through `opencode-delegate-mcp`, with full workspace gates, CI regression evals, and a dev/main release split.
 
-**Architecture:** Static gates (shell linters, pre-commit, CI) land first so every later commit is checked. Then an eval harness (fixture repo, scenario files, a dependency-free scorer, a stub MCP server, a csd runner) is built and unit-tested. The skill text itself is written only after a recorded RED baseline, then verified GREEN and refactored, per `superpowers:writing-skills`. CI regression and release tooling close it out.
+**Architecture:** Static gates (shell linters, pre-commit, CI) land first so every later commit is checked. Then an eval harness (fixture repo, scenario files, a dependency-free scorer, a stub MCP server, a headless `claude -p` runner) is built and unit-tested. The skill text itself is written only after a recorded RED baseline, then verified GREEN and refactored, per `superpowers:writing-skills`. CI regression and release tooling close it out.
 
-**Tech Stack:** bash, Node.js built-ins only (`node:test`, `fs`, `path`, `child_process`), `zip`/`unzip`, pre-commit (via pipx), GitHub Actions, `anthropics/claude-code-action@v1`, claude-session-driver `csd` 4.0.0, opencode 1.18.34, `mryesiller/opencode-delegate-mcp@52440fd`.
+**Tech Stack:** bash, Node.js built-ins only (`node:test`, `fs`, `path`, `child_process`), `zip`/`unzip`, pre-commit (via pipx), GitHub Actions, `anthropics/claude-code-action@v1`, Claude Code CLI (`claude -p`), opencode 1.18.34, `mryesiller/opencode-delegate-mcp@52440fd`.
 
 **Spec:** `docs/superpowers/specs/2026-10-03-token-saver-hardening-design.md`
 
@@ -20,7 +20,7 @@
 - `token-saver.skill` is build output of `scripts/build-skill.sh`; never hand-edited.
 - `tests/results/` exists only on `dev`; it must never reach `main`.
 - Thresholds: local GREEN ≥4/5 per scenario; CI ≥2/3 per scenario.
-- Absolute machine paths used in this plan: opencode `/home/linuxbrew/.linuxbrew/bin/opencode`, node `/home/linuxbrew/.linuxbrew/bin/node`, csd `/home/crichalchemist/.claude/plugins/cache/superpowers-marketplace/claude-session-driver/4.0.0/skills/driving-claude-code-sessions/scripts/csd`. Committed files must not contain them (generated run files may).
+- Absolute machine paths used in this plan: opencode `/home/linuxbrew/.linuxbrew/bin/opencode`, node `/home/linuxbrew/.linuxbrew/bin/node`, claude `~/.local/bin/claude`. Committed files must not contain them (generated run files may).
 
 ## Review Focus
 
@@ -146,7 +146,7 @@ tests/.runs/
 - `pre-commit run -a` — all gates.
 - `node --test tests/*.test.js` — unit tests for scorer and stub.
 - `bash tests/scripts.test.sh` — tests for shell scripts.
-- `bash tests/run-csd.sh <red|green|refactor> <scenario-id> [reps]` — live eval (local only).
+- `bash tests/run-local.sh <red|green|refactor> <scenario-id> [reps]` — live eval via headless `claude -p` (local only; tools limited to tests/allowed-tools.txt).
 
 ## Rules
 - Any SKILL.md or references/ edit requires a RED run first (superpowers:writing-skills).
@@ -1045,14 +1045,18 @@ SKIP=check-skill,skill-in-sync git commit -m "Add eval scenarios for delegate, k
 
 ---
 
-### Task 7: Run preparation and csd runner
+### Task 7: Run preparation and headless runner
+
+> Revised 2026-10-03: csd workers replaced by headless `claude -p` (user decision). csd's trust-gate handling fails on current Claude Code, and permission-bypassed workers were blocked by auto mode. `claude -p` has no trust prompt, runs only `tests/allowed-tools.txt`, and emits the same message shape as the CI action's execution log.
 
 **Files:**
-- Create: `tests/prepare-run.sh`, `tests/run-csd.sh`
+- Create: `tests/prepare-run.sh`, `tests/run-local.sh`, `tests/allowed-tools.txt`
+- Modify: `.claude/CLAUDE.md` (runner command line)
 
 **Interfaces:**
-- Produces: `bash tests/prepare-run.sh <scenario.md> <with-skill:0|1> <run-dir>` → creates `<run-dir>` (fixture copy, `git init` + initial commit, `node_modules`, `mcp.json`, `.claude/opencode-delegate.json`, optional `.claude/skills/token-saver/`, `PROMPT.md`). Used by both csd runner and CI.
-- Produces: `bash tests/run-csd.sh <red|green|refactor> <scenario-id> [reps=5]` → `tests/results/<phase>/<id>/<rep>/{events.jsonl,final.md,verdict.json}`.
+- Produces: `bash tests/prepare-run.sh <scenario.md> <with-skill:0|1> <run-dir>` → creates `<run-dir>` (fixture copy, `git init` + initial commit, `node_modules`, `mcp.json`, `.claude/opencode-delegate.json`, optional `.claude/skills/token-saver/`, `PROMPT.md`). Used by both the local runner and CI.
+- Produces: `tests/allowed-tools.txt` — one comma-separated line, the only tools eval runs may use (local and CI read the same file).
+- Produces: `bash tests/run-local.sh <red|green|refactor> <scenario-id> [reps=5]` → `tests/results/<phase>/<id>/<rep>/{stream.jsonl,execution.json,final.md,verdict.json,run.diff}`; `verdict.json` adds `sha`, `phase`, `model`.
 
 - [ ] **Step 1: Implement** — `tests/prepare-run.sh`:
 
@@ -1093,50 +1097,72 @@ node -e 'const s=require(process.argv[1]);process.stdout.write(s.parseScenario(r
 echo "$RUN"
 ```
 
-`tests/run-csd.sh`:
+`tests/allowed-tools.txt` (single line, no trailing spaces; `Skill` lets the installed skill load):
+
+```text
+Skill,mcp__opencode-delegate__delegate_task,mcp__opencode-delegate__delegate_tests,mcp__opencode-delegate__list_models,mcp__opencode-delegate__get_delegate_config,mcp__opencode-delegate__set_delegate_config,Read,Edit,Write,Glob,Grep,Bash(git diff:*),Bash(git status:*),Bash(npm test:*),Bash(npx vitest:*),Bash(npx tsc:*)
+```
+
+`tests/run-local.sh`:
 
 ```bash
 #!/usr/bin/env bash
-# Run one scenario N times in fresh csd workers and score each run.
+# Run one scenario N times with headless `claude -p` in fresh working copies and score each run.
 set -eu
 PHASE=$1; ID=$2; REPS=${3:-5}
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-CSD=${CSD:-$HOME/.claude/plugins/cache/superpowers-marketplace/claude-session-driver/4.0.0/skills/driving-claude-code-sessions/scripts/csd}
 SCEN="$ROOT/tests/scenarios/$ID.md"
 [ -f "$SCEN" ] || { echo "no scenario $ID"; exit 1; }
 case "$PHASE" in red) SKILL=0 ;; green|refactor) SKILL=1 ;; *) echo "phase must be red|green|refactor"; exit 1 ;; esac
 SHA=$(git -C "$ROOT" rev-parse --short HEAD)
+TOOLS=$(cat "$ROOT/tests/allowed-tools.txt")
 
 for rep in $(seq 1 "$REPS"); do
   RUN="$ROOT/tests/.runs/$PHASE-$ID-$rep"
   OUT="$ROOT/tests/results/$PHASE/$ID/$rep"
-  mkdir -p "$OUT"
+  rm -rf "$OUT"; mkdir -p "$OUT"
   bash "$ROOT/tests/prepare-run.sh" "$SCEN" "$SKILL" "$RUN" >/dev/null
-  NAME="ts-$PHASE-$ID-$rep"
-  "$CSD" launch "$NAME" "$RUN" -- --mcp-config "$RUN/mcp.json" --strict-mcp-config >/dev/null
-  W=/tmp/csd-workers/bin/$NAME
-  "$W" converse "$(cat "$RUN/PROMPT.md")" 900 > "$OUT/final.md" || echo "converse timed out" >> "$OUT/final.md"
-  "$W" read-events --type pre_tool_use > "$OUT/events.jsonl"
-  "$W" stop >/dev/null || true
-  node "$ROOT/tests/score.js" --scenario "$SCEN" --csd "$OUT/events.jsonl" --run-dir "$RUN" > "$OUT/verdict.tmp" || true
-  node -e 'const v=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));v.sha=process.argv[2];v.phase=process.argv[3];console.log(JSON.stringify(v,null,2))' "$OUT/verdict.tmp" "$SHA" "$PHASE" > "$OUT/verdict.json"
+  if ! (cd "$RUN" && timeout 900 claude -p "$(cat PROMPT.md)" \
+        --output-format stream-json --verbose --max-turns 40 \
+        --mcp-config "$RUN/mcp.json" --strict-mcp-config \
+        --allowedTools "$TOOLS" < /dev/null > "$OUT/stream.jsonl"); then
+    echo "claude exited non-zero" > "$OUT/notes.txt"
+  fi
+  # stream-json is one message per line; the scorer reads the same array shape as the CI execution log.
+  MODEL=$(node -e '
+    const fs = require("fs");
+    const [src, exec, fin] = process.argv.slice(1);
+    const msgs = fs.readFileSync(src, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l));
+    fs.writeFileSync(exec, JSON.stringify(msgs));
+    const r = msgs.find((m) => m.type === "result");
+    fs.writeFileSync(fin, (r && r.result) || "");
+    const init = msgs.find((m) => m.type === "system" && m.subtype === "init");
+    console.log((init && init.model) || "unknown");
+  ' "$OUT/stream.jsonl" "$OUT/execution.json" "$OUT/final.md")
+  node "$ROOT/tests/score.js" --scenario "$SCEN" --execution "$OUT/execution.json" --run-dir "$RUN" > "$OUT/verdict.tmp" || true
+  node -e 'const v=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));v.sha=process.argv[2];v.phase=process.argv[3];v.model=process.argv[4];console.log(JSON.stringify(v,null,2))' "$OUT/verdict.tmp" "$SHA" "$PHASE" "$MODEL" > "$OUT/verdict.json"
   rm "$OUT/verdict.tmp"
   (cd "$RUN" && git diff > "$OUT/run.diff"; git status --short >> "$OUT/run.diff")
   node -e 'const v=require(process.argv[1]);console.log((v.pass?"PASS":"FAIL")+" "+v.id+" rep "+process.argv[2]+(v.pass?"":" :: "+v.reasons.join("; ")))' "$OUT/verdict.json" "$rep"
 done
 ```
 
-- [ ] **Step 2: Verify `read-events` output is JSONL the scorer accepts**
+In `.claude/CLAUDE.md` replace the line
+`` - `bash tests/run-csd.sh <red|green|refactor> <scenario-id> [reps]` — live eval (local only). ``
+with
+`` - `bash tests/run-local.sh <red|green|refactor> <scenario-id> [reps]` — live eval via headless `claude -p` (local only; tools limited to tests/allowed-tools.txt). ``
 
-Run: `bash tests/run-csd.sh red D3-jsdoc 1`
-Expected: one `PASS`/`FAIL D3-jsdoc rep 1` line (either is fine — this is plumbing), and `head -1 tests/results/red/D3-jsdoc/1/events.jsonl` parses as JSON with `"event":"pre_tool_use"`. If `read-events` prints a non-JSON format, adapt `callsFromCsd` + its test in Task 4 to that format before continuing (and re-run `node --test tests/score.test.js tests/stub-mcp.test.js`).
+- [ ] **Step 2: Plumbing run — verify the stream parses and the scorer sees tool calls**
 
-- [ ] **Step 3: Remove plumbing run, commit scripts**
+Run (PATH must include `~/.local/bin` for `claude` and `/home/linuxbrew/.linuxbrew/bin` for node/npx): `bash tests/run-local.sh red D3-jsdoc 1`
+Expected: one `PASS`/`FAIL D3-jsdoc rep 1` line (either is fine — this is plumbing); `tests/results/red/D3-jsdoc/1/verdict.json` has a non-empty `calls` array and a `model` other than `unknown`; `final.md` is non-empty. If `calls` is empty while `stream.jsonl` contains `"tool_use"`, the stream shape differs from the execution-log shape: report it with the first `assistant` line (truncated to 400 chars) — do not change `tests/score.js` in this task.
+
+- [ ] **Step 3: Remove plumbing run, commit**
 
 ```bash
-rm -rf tests/results/red/D3-jsdoc
-SKIP=check-skill,skill-in-sync git add tests/prepare-run.sh tests/run-csd.sh
-SKIP=check-skill,skill-in-sync git commit -m "Add eval run preparation and csd runner"
+rm -rf tests/results/red/D3-jsdoc tests/.runs
+SKIP=check-skill git add tests/prepare-run.sh tests/run-local.sh tests/allowed-tools.txt .claude/CLAUDE.md
+SKIP=check-skill git commit -m "Add eval run preparation and headless claude -p runner"
 ```
 
 ---
@@ -1147,13 +1173,13 @@ SKIP=check-skill,skill-in-sync git commit -m "Add eval run preparation and csd r
 - Create: `tests/results/red/**`, `tests/results/red/SUMMARY.md`, `tests/results/red/ANALYSIS.md`
 
 **Interfaces:**
-- Consumes: `tests/run-csd.sh` (Task 7). Skill NOT installed.
+- Consumes: `tests/run-local.sh` (Task 7). Skill NOT installed.
 
 - [ ] **Step 1: Run all scenarios, 5 reps each**
 
 ```bash
 for id in D1-zod-schema D2-fixtures-volume D3-jsdoc K1-jwt-deadline K2-billing-batch V1-defective-delegate F1-no-mcp C1-config-guard; do
-  bash tests/run-csd.sh red "$id" 5
+  bash tests/run-local.sh red "$id" 5
 done | tee tests/results/red/run.log
 ```
 
@@ -1231,7 +1257,7 @@ Expected: check-skill exit 0; `in sync`; every hook passes with no SKIP.
 
 ```bash
 for id in D1-zod-schema D2-fixtures-volume D3-jsdoc K1-jwt-deadline K2-billing-batch V1-defective-delegate F1-no-mcp C1-config-guard; do
-  bash tests/run-csd.sh green "$id" 5
+  bash tests/run-local.sh green "$id" 5
 done | tee tests/results/green/run.log
 ```
 
@@ -1259,7 +1285,7 @@ git commit -m "Rewrite token-saver skill from RED evidence; record GREEN runs"
 - [ ] **Step 3: Re-run affected scenarios plus K1 and K2**
 
 ```bash
-for id in K1-jwt-deadline K2-billing-batch <each scenario that failed>; do bash tests/run-csd.sh refactor "$id" 5; done | tee tests/results/refactor/run.log
+for id in K1-jwt-deadline K2-billing-batch <each scenario that failed>; do bash tests/run-local.sh refactor "$id" 5; done | tee tests/results/refactor/run.log
 ```
 
 Expected: every scenario ≥4/5. Repeat Steps 1–3 until no new rationalization appears in a full round.
@@ -1327,7 +1353,8 @@ tests/stub-mcp.js
 tests/stub-mcp.test.js
 tests/scripts.test.sh
 tests/prepare-run.sh
-tests/run-csd.sh
+tests/run-local.sh
+tests/allowed-tools.txt
 tests/scenarios/
 tests/fixture/
 ```
@@ -1421,7 +1448,9 @@ jobs:
         with: { node-version: 22 }
       - run: npm i -g opencode-ai
       - id: prep
-        run: echo "dir=$(bash tests/prepare-run.sh tests/scenarios/${{ matrix.scenario }}.md 1 ${{ runner.temp }}/run)" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "dir=$(bash tests/prepare-run.sh tests/scenarios/${{ matrix.scenario }}.md 1 ${{ runner.temp }}/run)" >> "$GITHUB_OUTPUT"
+          echo "tools=$(cat tests/allowed-tools.txt)" >> "$GITHUB_OUTPUT"
       - id: claude
         uses: anthropics/claude-code-action@v1
         env:
@@ -1433,7 +1462,7 @@ jobs:
           claude_args: >-
             --mcp-config ${{ steps.prep.outputs.dir }}/mcp.json --strict-mcp-config
             --max-turns 40
-            --allowedTools "mcp__opencode-delegate__delegate_task,mcp__opencode-delegate__delegate_tests,mcp__opencode-delegate__list_models,mcp__opencode-delegate__get_delegate_config,mcp__opencode-delegate__set_delegate_config,Read,Edit,Write,Glob,Grep,Bash(git diff:*),Bash(git status:*),Bash(npm test:*),Bash(npx vitest:*),Bash(npx tsc:*)"
+            --allowedTools "${{ steps.prep.outputs.tools }}"
       - if: always()
         run: |
           mkdir -p verdicts/${{ matrix.scenario }}-${{ matrix.rep }}

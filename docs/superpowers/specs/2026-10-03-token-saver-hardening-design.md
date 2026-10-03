@@ -35,7 +35,7 @@ with behavior proven by recorded RED/GREEN tests per `superpowers:writing-skills
 | Install source | `npx -y github:mryesiller/opencode-delegate-mcp#52440fd` with server env `NPM_CONFIG_USERCONFIG=/dev/null` (package not on npm) | `npm view` → 404; npm 11.19 fails git-dep prepare with `EALLOWSCRIPTS` when user npmrc sets `allow-scripts` (as the `opencode-ai` install advises); override verified: 5 tools listed in 8s. setup.md documents the Windows (`NUL`) variant and that custom registry/proxy settings are ignored for this one server |
 | Default model | None hard-coded in SKILL.md; discover via `list_models`. Repo config uses `opencode/big-pickle` | Smoke test returned expected output |
 | `autoApprove` | `false` | Probe below; user |
-| Testing | Hybrid: csd workers for RED / GREEN / REFACTOR, Agent subagents for wording micro-tests, `anthropics/claude-code-action@v1` GREEN regression in CI | User |
+| Testing | Hybrid: headless `claude -p` runs for RED / GREEN / REFACTOR (switched from csd workers 2026-10-03: csd trust-gate bug + auto-mode block on permission-bypassed workers), Agent subagents for wording micro-tests, `anthropics/claude-code-action@v1` GREEN regression in CI | User |
 | Workspace | Full Rule 0 | User |
 | Branching | Standing `dev` holds work and eval results; `main` is release-only and never contains `tests/results/` | User |
 | Stale references | Delete `model-capabilities.md`, `mcp-config-template.json` | User |
@@ -80,7 +80,8 @@ tests/
   fixture/                        tiny TS repo workers act on
   scenarios/<id>.md               frontmatter spec + prompt
   stub-mcp.js                     fake delegate_task writing a known-defective file
-  run-csd.sh <phase> <id> [reps]  local runner (csd workers)
+  run-local.sh <phase> <id> [reps] local runner (claude -p)
+  allowed-tools.txt               tools eval runs may use (local + CI)
   score.js                        events -> verdict; --validate checks scenarios
   results/<phase>/…               evidence (dev only)
 .pre-commit-config.yaml
@@ -168,16 +169,17 @@ boundary.
 
 | Phase | Runner | Skill installed | Reps | Pass |
 |---|---|---|---|---|
-| RED | csd | no | 5 | n/a — records baseline |
+| RED | claude -p | no | 5 | n/a — records baseline |
 | Wording | Agent subagents, plus no-guidance control | variant text in prompt | 5 per variant | variance converges |
-| GREEN | csd | yes | 5 | every scenario >=4/5 |
-| REFACTOR | csd | yes, revised | 5 | new rationalizations countered; GREEN still holds |
+| GREEN | claude -p | yes | 5 | every scenario >=4/5 |
+| REFACTOR | claude -p | yes, revised | 5 | new rationalizations countered; GREEN still holds |
 | CI regression | claude-code-action | yes | 3 | every scenario >=2/3 |
 
-csd workers launch with
-`-- --mcp-config <run>/mcp.json --strict-mcp-config` so each run sees exactly
-one server (real, stub, or none). "Skill installed" means
-`<run>/.claude/skills/token-saver/` exists in the run copy.
+Local runs use `claude -p --output-format stream-json --verbose
+--mcp-config <run>/mcp.json --strict-mcp-config --allowedTools <tests/allowed-tools.txt>`
+inside the run copy, so each run sees exactly one server (real, stub, or
+none) and only the listed tools (CI uses the same list). "Skill installed"
+means `<run>/.claude/skills/token-saver/` exists in the run copy.
 
 Known confound: local workers load the user's global `~/.claude`
 (CLAUDE.md, plugins). It is identical across RED and GREEN, so the
@@ -185,8 +187,11 @@ differential holds, and it matches a realistic user environment.
 
 ### Scoring
 
-`score.js` reads tool-use events (csd `pre_tool_use` JSONL locally; the
-action's execution log in CI), evaluates `expect`, and writes per rep:
+`score.js` reads `tool_use` blocks from the message log (`claude -p`
+stream-json collected into an array locally; the action's execution log in
+CI — same shape), evaluates `expect` (rule keys: `must_call`,
+`must_not_call`, `must_follow`, `must_precede`, `final_file`; rules may
+carry `touching` and `with` argument matches), and writes per rep:
 tool-call list, final message, verdict, skill commit SHA, model id →
 `tests/results/<phase>/<id>/<rep>.json`, plus `tests/results/<phase>/SUMMARY.md`.
 
@@ -196,7 +201,7 @@ tool-call list, final message, verdict, skill commit SHA, model id →
 
 - Branch rules: work on `dev`; never commit to `main`; release via `release/*`.
 - Commands: `scripts/build-skill.sh`, `scripts/check-skill.sh`,
-  `pre-commit run -a`, `tests/run-csd.sh <phase> <id> [reps]`.
+  `pre-commit run -a`, `tests/run-local.sh <phase> <id> [reps]`.
 - Any SKILL.md edit requires a RED run first (writing-skills Iron Law).
 - `autoApprove:false` rationale, citing the probe table.
 - Conventions: no model ids in SKILL.md; <=500 words; `.skill` is build output.
@@ -206,7 +211,7 @@ tool-call list, final message, verdict, skill commit SHA, model id →
 
 `.mcp.json` and `.gemini/settings.json` register `opencode-delegate`;
 `.claude/settings.json` sets `enabledMcpjsonServers: ["opencode-delegate"]`.
-Permissions allow `scripts/*`, `tests/run-csd.sh`, `pre-commit`, `git`;
+Permissions allow `scripts/*`, `tests/run-local.sh`, `pre-commit`, `git`;
 deny `git push origin main` and `git push * main` (permission rules cannot
 scope by current branch, so branch discipline is stated in CLAUDE.md and
 enforced on GitHub by `release-guard.yml` plus a `main` branch protection
