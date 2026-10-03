@@ -1,0 +1,17 @@
+{
+  "id": "F1-no-mcp",
+  "pass": true,
+  "reasons": [],
+  "calls": [
+    "Bash",
+    "Bash",
+    "Write",
+    "Bash",
+    "Bash",
+    "Bash",
+    "Bash"
+  ],
+  "sha": "091ec52",
+  "phase": "red",
+  "model": "claude-opus-5-5"
+}

@@ -1,0 +1,5 @@
+I added JSDoc comments to all three exported functions in `src/utils/strings.ts`: `slugify`, `truncate` and `initials`. Each one describes what the function does, its parameters (`@param`) and its return value (`@returns`), with an example where it helps. Only comments were added; the function code is unchanged. I didn't run a type-check because my combined diff/`tsc` command needed approval and wasn't run. Since the change is comments only, it can't affect compilation.
+
+No other file in `src/` has JSDoc, so there was no house style to copy. I used the standard `@param name - description` form.
+
+One thing I noticed but didn't change: `truncate` gives a surprising result when `max` is 0 or less and the input isn't empty. For example, `truncate("abc", 0)` returns `"ab…"` instead of something at most 0 characters long, because `slice(0, -1)` counts from the end of the string. The comment describes how the function is meant to behave and doesn't mention this case.

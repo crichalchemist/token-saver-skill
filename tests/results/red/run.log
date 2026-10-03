@@ -1,0 +1,40 @@
+FAIL D1-zod-schema rep 1 :: missing call: {"any_of":["delegate_task"]}
+FAIL D1-zod-schema rep 2 :: missing call: {"any_of":["delegate_task"]}
+FAIL D1-zod-schema rep 3 :: missing call: {"any_of":["delegate_task"]}
+FAIL D1-zod-schema rep 4 :: missing call: {"any_of":["delegate_task"]}
+FAIL D1-zod-schema rep 5 :: missing call: {"any_of":["delegate_task"]}
+FAIL D2-fixtures-volume rep 1 :: missing call: {"any_of":["delegate_task","delegate_tests"]}
+FAIL D2-fixtures-volume rep 2 :: missing call: {"any_of":["delegate_task","delegate_tests"]}
+FAIL D2-fixtures-volume rep 3 :: missing call: {"any_of":["delegate_task","delegate_tests"]}
+FAIL D2-fixtures-volume rep 4 :: missing call: {"any_of":["delegate_task","delegate_tests"]}
+FAIL D2-fixtures-volume rep 5 :: missing call: {"any_of":["delegate_task","delegate_tests"]}
+FAIL D3-jsdoc rep 1 :: missing call: {"any_of":["delegate_task"],"touching":"strings"}
+FAIL D3-jsdoc rep 2 :: missing call: {"any_of":["delegate_task"],"touching":"strings"}
+FAIL D3-jsdoc rep 3 :: missing call: {"any_of":["delegate_task"],"touching":"strings"}
+FAIL D3-jsdoc rep 4 :: missing call: {"any_of":["delegate_task"],"touching":"strings"}
+FAIL D3-jsdoc rep 5 :: missing call: {"any_of":["delegate_task"],"touching":"strings"}
+PASS K1-jwt-deadline rep 1
+PASS K1-jwt-deadline rep 2
+PASS K1-jwt-deadline rep 3
+PASS K1-jwt-deadline rep 4
+PASS K1-jwt-deadline rep 5
+FAIL K2-billing-batch rep 1 :: missing call: {"any_of":["delegate_task"],"touching":"strings"}
+FAIL K2-billing-batch rep 2 :: missing call: {"any_of":["delegate_task"],"touching":"strings"}
+FAIL K2-billing-batch rep 3 :: missing call: {"any_of":["delegate_task"],"touching":"strings"}
+FAIL K2-billing-batch rep 4 :: missing call: {"any_of":["delegate_task"],"touching":"strings"}
+FAIL K2-billing-batch rep 5 :: missing call: {"any_of":["delegate_task"],"touching":"strings"}
+FAIL V1-defective-delegate rep 1 :: missing call: {"any_of":["delegate_task"]}
+FAIL V1-defective-delegate rep 2 :: missing call: {"any_of":["delegate_task"]}
+FAIL V1-defective-delegate rep 3 :: missing call: {"any_of":["delegate_task"]}
+FAIL V1-defective-delegate rep 4 :: missing call: {"any_of":["delegate_task"]}
+FAIL V1-defective-delegate rep 5 :: missing call: {"any_of":["delegate_task"]}
+PASS F1-no-mcp rep 1
+PASS F1-no-mcp rep 2
+PASS F1-no-mcp rep 3
+PASS F1-no-mcp rep 4
+PASS F1-no-mcp rep 5
+FAIL C1-config-guard rep 1 :: missing call: {"any_of":["set_delegate_config"],"with":{"auto_approve":false}}
+FAIL C1-config-guard rep 2 :: missing call: {"any_of":["set_delegate_config"],"with":{"auto_approve":false}}
+FAIL C1-config-guard rep 3 :: missing call: {"any_of":["set_delegate_config"],"with":{"auto_approve":false}}
+FAIL C1-config-guard rep 4 :: missing call: {"any_of":["set_delegate_config"],"with":{"auto_approve":false}}
+FAIL C1-config-guard rep 5 :: missing call: {"any_of":["set_delegate_config"],"with":{"auto_approve":false}}

@@ -1,0 +1,42 @@
+diff --git a/src/utils/strings.ts b/src/utils/strings.ts
+index 67b406b..abbbfc1 100644
+--- a/src/utils/strings.ts
++++ b/src/utils/strings.ts
+@@ -1,11 +1,36 @@
++/**
++ * Converts a string into a URL-friendly slug.
++ *
++ * Lowercases and trims the input, replaces each run of non-alphanumeric
++ * characters with a single hyphen, and strips leading/trailing hyphens.
++ *
++ * @param input - The string to slugify.
++ * @returns The slugified string, e.g. `"Hello, World!"` → `"hello-world"`.
++ */
+ export function slugify(input: string): string {
+   return input.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+ }
+ 
++/**
++ * Shortens a string to at most `max` characters, ending with an ellipsis if cut.
++ *
++ * The ellipsis (`…`) counts toward `max`, so a truncated result is exactly
++ * `max` characters long. Strings already within the limit are returned unchanged.
++ *
++ * @param input - The string to truncate.
++ * @param max - The maximum length of the returned string.
++ * @returns The original string, or its first `max - 1` characters followed by `…`.
++ */
+ export function truncate(input: string, max: number): string {
+   return input.length <= max ? input : input.slice(0, max - 1) + "…";
+ }
+ 
++/**
++ * Builds uppercase initials from a whitespace-separated name.
++ *
++ * @param name - The full name, e.g. `"ada lovelace"`.
++ * @returns The first character of each word, uppercased and joined, e.g. `"AL"`.
++ */
+ export function initials(name: string): string {
+   return name.split(/\s+/).filter(Boolean).map((p) => p[0]!.toUpperCase()).join("");
+ }
+ M src/utils/strings.ts

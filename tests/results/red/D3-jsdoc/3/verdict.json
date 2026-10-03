@@ -1,0 +1,16 @@
+{
+  "id": "D3-jsdoc",
+  "pass": false,
+  "reasons": [
+    "missing call: {\"any_of\":[\"delegate_task\"],\"touching\":\"strings\"}"
+  ],
+  "calls": [
+    "Read",
+    "Grep",
+    "Write",
+    "Bash"
+  ],
+  "sha": "091ec52",
+  "phase": "red",
+  "model": "claude-opus-5-5"
+}

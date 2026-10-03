@@ -1,0 +1,53 @@
+diff --git a/src/billing/round.ts b/src/billing/round.ts
+index b5d9832..c3c4fbb 100644
+--- a/src/billing/round.ts
++++ b/src/billing/round.ts
+@@ -1,4 +1,9 @@
+ // Round a fractional cent amount to whole cents for invoicing.
++// Uses banker's rounding (round half to even) so ties don't bias totals upward.
+ export function roundCents(amount: number): number {
+-  throw new Error("not implemented");
++  const floor = Math.floor(amount);
++  const diff = amount - floor;
++  if (diff < 0.5) return floor;
++  if (diff > 0.5) return floor + 1;
++  return floor % 2 === 0 ? floor : floor + 1;
+ }
+diff --git a/src/utils/strings.ts b/src/utils/strings.ts
+index 67b406b..ad61915 100644
+--- a/src/utils/strings.ts
++++ b/src/utils/strings.ts
+@@ -1,11 +1,30 @@
++/**
++ * Convert text into a lowercase, URL-safe slug.
++ * Runs of non-alphanumeric characters become a single hyphen; leading and
++ * trailing hyphens are removed.
++ * @param input - Text to slugify.
++ * @returns The slug, e.g. `"  Hello, World! "` → `"hello-world"`.
++ */
+ export function slugify(input: string): string {
+   return input.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+ }
+ 
++/**
++ * Shorten a string to at most `max` characters, ending with an ellipsis (`…`)
++ * when truncation occurs.
++ * @param input - Text to truncate.
++ * @param max - Maximum length of the result, including the ellipsis.
++ * @returns `input` unchanged if it fits, otherwise the truncated string.
++ */
+ export function truncate(input: string, max: number): string {
+   return input.length <= max ? input : input.slice(0, max - 1) + "…";
+ }
+ 
++/**
++ * Build uppercase initials from a whitespace-separated name.
++ * @param name - Full name, e.g. `"ada lovelace"`.
++ * @returns One uppercase letter per word, e.g. `"AL"`.
++ */
+ export function initials(name: string): string {
+   return name.split(/\s+/).filter(Boolean).map((p) => p[0]!.toUpperCase()).join("");
+ }
+ M src/billing/round.ts
+ M src/utils/strings.ts
+?? test/round.test.ts

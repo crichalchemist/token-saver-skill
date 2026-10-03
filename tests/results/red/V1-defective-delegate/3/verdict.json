@@ -1,0 +1,21 @@
+{
+  "id": "V1-defective-delegate",
+  "pass": false,
+  "reasons": [
+    "missing call: {\"any_of\":[\"delegate_task\"]}"
+  ],
+  "calls": [
+    "Bash",
+    "Bash",
+    "Bash",
+    "Write",
+    "Bash",
+    "Bash",
+    "Bash",
+    "Write",
+    "Bash"
+  ],
+  "sha": "091ec52",
+  "phase": "red",
+  "model": "claude-opus-5-5"
+}
