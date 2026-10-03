@@ -37,3 +37,9 @@ repos:
         language: system
         pass_filenames: false
         files: ^(scripts/|tests/scripts\.test\.sh)
+      - id: check-scenarios
+        name: scenario files valid
+        entry: node tests/score.js --validate tests/scenarios
+        language: system
+        pass_filenames: false
+        files: ^tests/scenarios/
