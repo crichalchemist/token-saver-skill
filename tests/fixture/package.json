@@ -1,0 +1,8 @@
+{
+  "name": "fixture-app",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "vitest run" },
+  "dependencies": { "zod": "^3.23.8" },
+  "devDependencies": { "typescript": "^5.6.0", "vitest": "^2.1.0" }
+}
