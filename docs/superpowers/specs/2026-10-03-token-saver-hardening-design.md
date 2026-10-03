@@ -144,7 +144,9 @@ expect:
   must_follow: []          # e.g. [{after: delegate_task, any_of: ["Bash:git diff", "Read"]}]
 ```
 
-The body after the frontmatter is the prompt sent verbatim.
+The body after the frontmatter is the prompt sent verbatim. In files the
+frontmatter is written as JSON (a YAML subset) so the scorer needs no YAML
+dependency; the block above shows the same fields in YAML for readability.
 
 ### Scenarios
 
