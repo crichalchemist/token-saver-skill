@@ -15,23 +15,23 @@ mkskill() { # $1=dir $2=description $3=body
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
 
 mkskill "$T/good" "Use when routine work fits a delegate" "See [setup](references/setup.md)."
-bash "$ROOT/scripts/check-skill.sh" "$T/good" >/dev/null && ok "valid skill passes lint" || bad "valid skill passes lint"
+if bash "$ROOT/scripts/check-skill.sh" "$T/good" >/dev/null; then ok "valid skill passes lint"; else bad "valid skill passes lint"; fi
 
 mkskill "$T/desc" "Automatically delegates work" "body"
-bash "$ROOT/scripts/check-skill.sh" "$T/desc" >/dev/null && bad "workflow-style description is rejected" || ok "workflow-style description is rejected"
+if bash "$ROOT/scripts/check-skill.sh" "$T/desc" >/dev/null; then bad "workflow-style description is rejected"; else ok "workflow-style description is rejected"; fi
 
 mkskill "$T/long" "Use when x" "$(yes word | head -501 | tr '\n' ' ')"
-bash "$ROOT/scripts/check-skill.sh" "$T/long" >/dev/null && bad "body over 500 words is rejected" || ok "body over 500 words is rejected"
+if bash "$ROOT/scripts/check-skill.sh" "$T/long" >/dev/null; then bad "body over 500 words is rejected"; else ok "body over 500 words is rejected"; fi
 
 mkskill "$T/model" "Use when x" "Call with opencode/big-pickle."
-bash "$ROOT/scripts/check-skill.sh" "$T/model" >/dev/null && bad "hard-coded model id is rejected" || ok "hard-coded model id is rejected"
+if bash "$ROOT/scripts/check-skill.sh" "$T/model" >/dev/null; then bad "hard-coded model id is rejected"; else ok "hard-coded model id is rejected"; fi
 
 mkskill "$T/link" "Use when x" "See [gone](references/missing.md)."
-bash "$ROOT/scripts/check-skill.sh" "$T/link" >/dev/null && bad "dead reference link is rejected" || ok "dead reference link is rejected"
+if bash "$ROOT/scripts/check-skill.sh" "$T/link" >/dev/null; then bad "dead reference link is rejected"; else ok "dead reference link is rejected"; fi
 
 bash "$ROOT/scripts/build-skill.sh" "$T/good" "$T/out.skill" >/dev/null
-bash "$ROOT/scripts/build-skill.sh" --check "$T/good" "$T/out.skill" >/dev/null && ok "fresh build is in sync" || bad "fresh build is in sync"
+if bash "$ROOT/scripts/build-skill.sh" --check "$T/good" "$T/out.skill" >/dev/null; then ok "fresh build is in sync"; else bad "fresh build is in sync"; fi
 echo changed >> "$T/good/references/setup.md"
-bash "$ROOT/scripts/build-skill.sh" --check "$T/good" "$T/out.skill" >/dev/null && bad "edited reference makes build stale" || ok "edited reference makes build stale"
+if bash "$ROOT/scripts/build-skill.sh" --check "$T/good" "$T/out.skill" >/dev/null; then bad "edited reference makes build stale"; else ok "edited reference makes build stale"; fi
 
 echo "pass=$pass fail=$fail"; [ "$fail" -eq 0 ]
