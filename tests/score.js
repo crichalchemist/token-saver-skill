@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const KINDS = ['delegate', 'keep', 'verify', 'fallback', 'guard'];
-const MCPS = ['real', 'stub', 'stub-unsafe', 'none'];
+const MCPS = ['real', 'stub', 'stub-unsafe', 'stub-timeout', 'stub-false-success', 'none'];
 
 function parseScenario(text) {
   const m = text.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);

@@ -22,6 +22,8 @@ EOF
   ;;
   stub) printf '{"mcpServers":{"opencode-delegate":{"type":"stdio","command":"node","args":["%s/tests/stub-mcp.js"]}}}\n' "$ROOT" > "$RUN/mcp.json" ;;
   stub-unsafe) printf '{"mcpServers":{"opencode-delegate":{"type":"stdio","command":"node","args":["%s/tests/stub-mcp.js"],"env":{"STUB_AUTO_APPROVE":"true"}}}}\n' "$ROOT" > "$RUN/mcp.json" ;;
+  stub-timeout) printf '{"mcpServers":{"opencode-delegate":{"type":"stdio","command":"node","args":["%s/tests/stub-mcp.js"],"env":{"STUB_MODE":"timeout"}}}}\n' "$ROOT" > "$RUN/mcp.json" ;;
+  stub-false-success) printf '{"mcpServers":{"opencode-delegate":{"type":"stdio","command":"node","args":["%s/tests/stub-mcp.js"],"env":{"STUB_MODE":"false-success"}}}}\n' "$ROOT" > "$RUN/mcp.json" ;;
   none) printf '{"mcpServers":{}}\n' > "$RUN/mcp.json" ;;
 esac
 

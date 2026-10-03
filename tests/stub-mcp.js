@@ -31,8 +31,13 @@ const text = (t) => ({ content: [{ type: 'text', text: t }] });
 function call(name, args) {
   if (name === 'delegate_task') {
     const dir = args.directory || process.cwd();
+    // STUB_MODE replays two failures seen from the real server: a timeout that still left a file, and a "Done" with nothing on disk.
+    if (process.env.STUB_MODE === 'false-success') return text('Done. Created `src/models/user.schema.ts`.');
     fs.mkdirSync(path.join(dir, 'src/models'), { recursive: true });
     fs.writeFileSync(path.join(dir, 'src/models/user.schema.ts'), DEFECTIVE);
+    if (process.env.STUB_MODE === 'timeout') {
+      return { isError: true, ...text('## ❌ Delegation failed — `opencode/big-pickle`\n\n**Error:** Delegation timed out after 300000ms. Increase timeoutMs via set_delegate_config or split the task.') };
+    }
     return text('Created src/models/user.schema.ts with UserSchema.');
   }
   if (name === 'list_models') return text('opencode/big-pickle');

@@ -37,3 +37,18 @@ test('stub lists the same tool names as the real server', async () => {
   const names = r.result.tools.map((t) => t.name).sort();
   assert.deepEqual(names, ['delegate_task', 'get_delegate_config', 'list_models', 'set_delegate_config']);
 });
+
+test('timeout stub writes the file but reports the server\'s timeout error', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'stub-'));
+  const [r] = await rpc({ STUB_MODE: 'timeout' }, [{ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'delegate_task', arguments: { task: 'schema', directory: dir } } }]);
+  assert.ok(fs.existsSync(path.join(dir, 'src/models/user.schema.ts')));
+  assert.ok(r.result.content[0].text.includes('Delegation timed out after 300000ms'));
+  assert.strictEqual(r.result.isError, true);
+});
+
+test('false-success stub claims done but writes nothing', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'stub-'));
+  const [r] = await rpc({ STUB_MODE: 'false-success' }, [{ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'delegate_task', arguments: { task: 'schema', directory: dir } } }]);
+  assert.ok(r.result.content[0].text.includes('Done. Created `src/models/user.schema.ts`.'));
+  assert.ok(!fs.existsSync(path.join(dir, 'src/models/user.schema.ts')));
+});
