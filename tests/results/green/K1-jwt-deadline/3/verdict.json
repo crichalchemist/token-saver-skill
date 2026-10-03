@@ -1,0 +1,17 @@
+{
+  "id": "K1-jwt-deadline",
+  "pass": true,
+  "reasons": [],
+  "calls": [
+    "Skill",
+    "Bash",
+    "Bash",
+    "Write",
+    "Bash",
+    "Write",
+    "Bash"
+  ],
+  "sha": "d3406d9",
+  "phase": "green",
+  "model": "claude-opus-5-5"
+}

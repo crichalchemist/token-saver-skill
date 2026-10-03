@@ -1,0 +1,20 @@
+{
+  "id": "D3-jsdoc",
+  "pass": true,
+  "reasons": [],
+  "calls": [
+    "Skill",
+    "Read",
+    "ToolSearch",
+    "mcp__opencode-delegate__get_delegate_config",
+    "mcp__opencode-delegate__delegate_task",
+    "Bash",
+    "Bash",
+    "Bash",
+    "Bash",
+    "Bash"
+  ],
+  "sha": "d3406d9",
+  "phase": "green",
+  "model": "claude-opus-5-5"
+}

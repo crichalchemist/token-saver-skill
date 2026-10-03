@@ -1,0 +1,55 @@
+diff --git a/src/utils/strings.ts b/src/utils/strings.ts
+index 67b406b..290ec36 100644
+--- a/src/utils/strings.ts
++++ b/src/utils/strings.ts
+@@ -1,11 +1,49 @@
++/**
++ * Convert a string into a URL-friendly slug.
++ *
++ * Lowercases and trims the input, replaces each run of characters outside
++ * `[a-z0-9]` with a single `-`, then strips a leading and trailing `-`.
++ *
++ * @param input - The string to slugify.
++ * @returns The slugified string, which may be empty if `input` has no `[a-z0-9]` characters.
++ *
++ * @example
++ * slugify("Hello, World!"); // "hello-world"
++ */
+ export function slugify(input: string): string {
+   return input.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+ }
+ 
++/**
++ * Shorten a string to at most `max` characters, marking the cut with an ellipsis.
++ *
++ * Returns `input` unchanged when it is already `max` characters or shorter.
++ * Otherwise returns the first `max - 1` characters followed by `"…"`, so the
++ * result is exactly `max` characters long.
++ *
++ * @param input - The string to truncate.
++ * @param max - The maximum length of the returned string.
++ * @returns `input` if its length is at most `max`, otherwise a truncated string of length `max`.
++ *
++ * @example
++ * truncate("abcdef", 4); // "abc…"
++ */
+ export function truncate(input: string, max: number): string {
+   return input.length <= max ? input : input.slice(0, max - 1) + "…";
+ }
+ 
++/**
++ * Build uppercase initials from a person's name.
++ *
++ * Splits `name` on whitespace, drops empty parts, takes the first character of
++ * each remaining part and uppercases it, then joins them together.
++ *
++ * @param name - The full name to derive initials from.
++ * @returns The initials, or an empty string if `name` has no non-whitespace characters.
++ *
++ * @example
++ * initials("ada lovelace"); // "AL"
++ */
+ export function initials(name: string): string {
+   return name.split(/\s+/).filter(Boolean).map((p) => p[0]!.toUpperCase()).join("");
+ }
+ M src/utils/strings.ts

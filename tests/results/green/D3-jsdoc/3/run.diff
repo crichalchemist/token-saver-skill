@@ -1,0 +1,41 @@
+diff --git a/src/utils/strings.ts b/src/utils/strings.ts
+index 67b406b..d86b13e 100644
+--- a/src/utils/strings.ts
++++ b/src/utils/strings.ts
+@@ -1,11 +1,35 @@
++/**
++ * Convert text into a url-safe slug.
++ *
++ * @param input Text to slugify.
++ * @returns The lowercased, trimmed text with every run of characters
++ *   outside `[a-z0-9]` collapsed to a single `-`, and with any leading or
++ *   trailing `-` removed.
++ */
+ export function slugify(input: string): string {
+   return input.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+ }
+ 
++/**
++ * Shorten text to a maximum length.
++ *
++ * @param input Text to truncate.
++ * @param max Maximum length of the returned string.
++ * @returns `input` unchanged when its length is at most `max`; otherwise the
++ *   first `max - 1` characters followed by `…`, giving a result exactly `max`
++ *   characters long.
++ */
+ export function truncate(input: string, max: number): string {
+   return input.length <= max ? input : input.slice(0, max - 1) + "…";
+ }
+ 
++/**
++ * Derive initials from a name.
++ *
++ * @param name Name to build initials from.
++ * @returns The uppercased first character of each whitespace-separated part,
++ *   with empty parts skipped, joined without a separator.
++ */
+ export function initials(name: string): string {
+   return name.split(/\s+/).filter(Boolean).map((p) => p[0]!.toUpperCase()).join("");
+ }
+ M src/utils/strings.ts

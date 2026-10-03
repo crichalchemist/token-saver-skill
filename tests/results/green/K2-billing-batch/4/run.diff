@@ -1,0 +1,64 @@
+diff --git a/src/billing/round.ts b/src/billing/round.ts
+index b5d9832..504cb50 100644
+--- a/src/billing/round.ts
++++ b/src/billing/round.ts
+@@ -1,4 +1,9 @@
+ // Round a fractional cent amount to whole cents for invoicing.
++// Ties (exactly .5) go to the nearest even cent (banker's rounding).
+ export function roundCents(amount: number): number {
+-  throw new Error("not implemented");
++  const floor = Math.floor(amount);
++  const diff = amount - floor;
++  if (diff < 0.5) return floor;
++  if (diff > 0.5) return floor + 1;
++  return floor % 2 === 0 ? floor : floor + 1;
+ }
+diff --git a/src/utils/strings.ts b/src/utils/strings.ts
+index 67b406b..e48da7d 100644
+--- a/src/utils/strings.ts
++++ b/src/utils/strings.ts
+@@ -1,11 +1,41 @@
++/**
++ * Converts arbitrary text into a lowercase, hyphen-separated URL slug.
++ *
++ * @param input - Text to convert. Runs of characters outside `a-z0-9` collapse
++ *   into single hyphens, which are trimmed from both ends.
++ * @returns The slug, never with a leading or trailing hyphen.
++ *
++ * @example
++ * slugify("Q3 Revenue & Growth"); // "q3-revenue-growth"
++ */
+ export function slugify(input: string): string {
+   return input.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+ }
+ 
++/**
++ * Shortens text to at most `max` characters, replacing the cut with an ellipsis.
++ *
++ * @param input - Text to shorten.
++ * @param max - Maximum length of the result, the ellipsis included.
++ * @returns `input` unchanged when it already fits in `max`, otherwise its first
++ *   `max - 1` characters followed by "…".
++ *
++ * @example
++ * truncate("hello world", 5); // "hell…"
++ */
+ export function truncate(input: string, max: number): string {
+   return input.length <= max ? input : input.slice(0, max - 1) + "…";
+ }
+ 
++/**
++ * Builds uppercase initials from a person's name, ignoring extra whitespace.
++ *
++ * @param name - Full name to abbreviate.
++ * @returns The uppercase first letter of each whitespace-separated word.
++ *
++ * @example
++ * initials("  jean   luc  picard "); // "JLP"
++ */
+ export function initials(name: string): string {
+   return name.split(/\s+/).filter(Boolean).map((p) => p[0]!.toUpperCase()).join("");
+ }
+ M src/billing/round.ts
+ M src/utils/strings.ts
+?? test/round.test.ts
