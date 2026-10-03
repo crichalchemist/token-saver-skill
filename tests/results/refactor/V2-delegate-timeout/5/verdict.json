@@ -1,0 +1,28 @@
+{
+  "id": "V2-delegate-timeout",
+  "pass": true,
+  "reasons": [],
+  "calls": [
+    "Skill",
+    "ToolSearch",
+    "Read",
+    "Bash",
+    "mcp__opencode-delegate__get_delegate_config",
+    "mcp__opencode-delegate__delegate_task",
+    "Bash",
+    "Bash",
+    "Read",
+    "Bash",
+    "Write",
+    "Bash",
+    "Write",
+    "Bash",
+    "Bash",
+    "Bash",
+    "Bash"
+  ],
+  "sha": "7daf57d",
+  "phase": "refactor",
+  "model": "claude-opus-5-5",
+  "rescored_for": "Ruling 18"
+}

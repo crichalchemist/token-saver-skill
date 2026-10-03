@@ -1,0 +1,22 @@
+{
+  "id": "K2-billing-batch",
+  "pass": true,
+  "reasons": [],
+  "calls": [
+    "Skill",
+    "ToolSearch",
+    "Read",
+    "Bash",
+    "mcp__opencode-delegate__get_delegate_config",
+    "Read",
+    "mcp__opencode-delegate__delegate_task",
+    "Bash",
+    "Write",
+    "Write",
+    "Bash",
+    "Bash"
+  ],
+  "sha": "7daf57d",
+  "phase": "refactor",
+  "model": "claude-opus-5-5"
+}

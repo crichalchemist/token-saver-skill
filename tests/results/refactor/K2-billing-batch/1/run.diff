@@ -1,0 +1,66 @@
+diff --git a/src/billing/round.ts b/src/billing/round.ts
+index b5d9832..1f3ce24 100644
+--- a/src/billing/round.ts
++++ b/src/billing/round.ts
+@@ -1,4 +1,11 @@
+ // Round a fractional cent amount to whole cents for invoicing.
++// Uses banker's rounding: exact halves go to the nearest even cent.
+ export function roundCents(amount: number): number {
+-  throw new Error("not implemented");
++  const floor = Math.floor(amount);
++  const diff = amount - floor;
++  // Tolerate float noise so a computed 2.4999999999 or 2.5000000001 is treated as a half.
++  if (Math.abs(diff - 0.5) < 1e-9) {
++    return floor % 2 === 0 ? floor : floor + 1;
++  }
++  return Math.round(amount);
+ }
+diff --git a/src/utils/strings.ts b/src/utils/strings.ts
+index 67b406b..464900f 100644
+--- a/src/utils/strings.ts
++++ b/src/utils/strings.ts
+@@ -1,11 +1,42 @@
++/**
++ * Slugifies the input string for use in URLs or identifiers.
++ * 
++ * @param input - The string to slugify.
++ * @returns A slugified string: lowercased, trimmed, with runs of non [a-z0-9] characters collapsed into a single "-", and leading/trailing "-" stripped.
++ * @example
++ * slugify("Hello World!"); // "hello-world"
++ * slugify("  Foo---Bar  "); // "foo-bar"
++ * slugify("test@example.com"); // "test-example-com"
++ */
+ export function slugify(input: string): string {
+   return input.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+ }
+ 
++/**
++ * Truncates the input string to a maximum length, appending an ellipsis if truncated.
++ * 
++ * @param input - The string to truncate.
++ * @param max - The maximum length of the returned string (including ellipsis when truncated).
++ * @returns The original string if `input.length <= max`; otherwise the first `max - 1` characters followed by "…". The result length is `max` when truncated.
++ * @example
++ * truncate("Hello World", 5); // "Hell…"
++ * truncate("Short", 10); // "Short"
++ * truncate("Hello", 2); // "H…"
++ */
+ export function truncate(input: string, max: number): string {
+   return input.length <= max ? input : input.slice(0, max - 1) + "…";
+ }
+ 
++/**
++ * Generates initials from a name.
++ * 
++ * @param name - The full name to extract initials from.
++ * @returns A string of uppercase initials: splits on whitespace, filters out empty tokens, takes the first character of each word, and uppercases it.
++ * @example
++ * initials("John Doe"); // "JD"
++ * initials("Mary Jane Watson"); // "MJW"
++ * initials("  Alice   Bob  "); // "AB"
++ */
+ export function initials(name: string): string {
+   return name.split(/\s+/).filter(Boolean).map((p) => p[0]!.toUpperCase()).join("");
+ }
+ M src/billing/round.ts
+ M src/utils/strings.ts

@@ -1,0 +1,62 @@
+diff --git a/src/billing/round.ts b/src/billing/round.ts
+index b5d9832..b860f15 100644
+--- a/src/billing/round.ts
++++ b/src/billing/round.ts
+@@ -1,4 +1,9 @@
+ // Round a fractional cent amount to whole cents for invoicing.
++// Uses banker's rounding (round half to even) so exact .5 ties don't bias totals upward.
+ export function roundCents(amount: number): number {
+-  throw new Error("not implemented");
++  const floor = Math.floor(amount);
++  const diff = amount - floor;
++  if (diff < 0.5) return floor;
++  if (diff > 0.5) return floor + 1;
++  return floor % 2 === 0 ? floor : floor + 1;
+ }
+diff --git a/src/utils/strings.ts b/src/utils/strings.ts
+index 67b406b..e2bbafc 100644
+--- a/src/utils/strings.ts
++++ b/src/utils/strings.ts
+@@ -1,11 +1,39 @@
++/**
++ * Converts a string to a URL-friendly slug.
++ * Lowercases, trims, collapses runs of non [a-z0-9] chars into single '-', and strips leading/trailing '-'.
++ *
++ * @param input - The string to slugify.
++ * @returns The slugified string.
++ * @example
++ * slugify('Hello, World!') // 'hello-world'
++ */
+ export function slugify(input: string): string {
+   return input.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+ }
+ 
++/**
++ * Truncates a string to a maximum length with an ellipsis.
++ * Returns input unchanged if length <= max, otherwise the first max-1 chars plus a '…' ellipsis (total length max).
++ *
++ * @param input - The string to truncate.
++ * @param max - The maximum length of the returned string.
++ * @returns The truncated string.
++ * @example
++ * truncate('Hello, World!', 8) // 'Hello, …'
++ */
+ export function truncate(input: string, max: number): string {
+   return input.length <= max ? input : input.slice(0, max - 1) + "…";
+ }
+ 
++/**
++ * Returns the initials of a name.
++ * Returns the uppercased first character of each whitespace-separated word, concatenated.
++ *
++ * @param name - The name to get initials from.
++ * @returns The initials string.
++ * @example
++ * initials('John Doe') // 'JD'
++ */
+ export function initials(name: string): string {
+   return name.split(/\s+/).filter(Boolean).map((p) => p[0]!.toUpperCase()).join("");
+ }
+ M src/billing/round.ts
+ M src/utils/strings.ts
+?? test/round.test.ts

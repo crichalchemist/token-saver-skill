@@ -1,0 +1,70 @@
+diff --git a/src/billing/round.ts b/src/billing/round.ts
+index b5d9832..8107d1a 100644
+--- a/src/billing/round.ts
++++ b/src/billing/round.ts
+@@ -1,4 +1,12 @@
+ // Round a fractional cent amount to whole cents for invoicing.
++// Uses banker's rounding (round half to even) so ties don't bias totals upward.
+ export function roundCents(amount: number): number {
+-  throw new Error("not implemented");
++  const floor = Math.floor(amount);
++  const diff = amount - floor;
++  // Tolerate float noise so e.g. 2.675 * 100 (267.49999999999997) is treated as a tie.
++  const epsilon = 1e-9 * Math.max(1, Math.abs(amount));
++  if (Math.abs(diff - 0.5) < epsilon) {
++    return floor % 2 === 0 ? floor : floor + 1;
++  }
++  return Math.round(amount);
+ }
+diff --git a/src/utils/strings.ts b/src/utils/strings.ts
+index 67b406b..9e5aa4f 100644
+--- a/src/utils/strings.ts
++++ b/src/utils/strings.ts
+@@ -1,11 +1,45 @@
++/**
++ * Convert `input` to a lowercase, URL-safe slug.
++ *
++ * Trims surrounding whitespace, replaces each run of characters outside
++ * `[a-z0-9]` with a single `-`, then strips a leading or trailing `-`. Because
++ * only ASCII alphanumerics survive, accented and non-Latin characters become
++ * separators rather than being preserved.
++ *
++ * @param input - The text to convert.
++ * @returns The slug form of `input`; an empty string if it has no `[a-z0-9]` characters.
++ * @example slugify("  Hello, World! "); // "hello-world"
++ */
+ export function slugify(input: string): string {
+   return input.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+ }
+ 
++/**
++ * Shorten `input` to at most `max` characters, marking the cut with an ellipsis.
++ *
++ * Returns `input` unchanged when it is already `max` characters or shorter.
++ * Otherwise returns the first `max - 1` characters followed by a single `…`
++ * (U+2026), for a result of exactly `max` characters.
++ *
++ * @param input - The text to shorten.
++ * @param max - The maximum length of the returned string, in characters.
++ * @returns `input` when `input.length <= max`; otherwise the truncated text plus `…`.
++ * @example truncate("Hello, World!", 8); // "Hello, …"
++ */
+ export function truncate(input: string, max: number): string {
+   return input.length <= max ? input : input.slice(0, max - 1) + "…";
+ }
+ 
++/**
++ * Build uppercased initials from a whitespace-separated `name`.
++ *
++ * Splits on runs of whitespace, drops empty parts, takes the first character of
++ * each remaining word, uppercases it, and joins the results with no separator.
++ *
++ * @param name - The full name to abbreviate.
++ * @returns The concatenated uppercase initials; an empty string if `name` has no words.
++ * @example initials("Ada Lovelace King"); // "ALK"
++ */
+ export function initials(name: string): string {
+   return name.split(/\s+/).filter(Boolean).map((p) => p[0]!.toUpperCase()).join("");
+ }
+ M src/billing/round.ts
+ M src/utils/strings.ts
