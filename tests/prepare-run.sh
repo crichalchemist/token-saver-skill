@@ -2,6 +2,7 @@
 # Build an isolated working copy for one eval run.
 set -eu
 SCEN=$1; WITH_SKILL=$2; RUN=$3
+case "$RUN" in /*) ;; *) echo "run dir must be an absolute path: $RUN"; exit 1 ;; esac
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 mcp=$(node -e 'const s=require(process.argv[1]);console.log(s.parseScenario(require("fs").readFileSync(process.argv[2],"utf8")).meta.mcp)' "$ROOT/tests/score.js" "$SCEN")
 
