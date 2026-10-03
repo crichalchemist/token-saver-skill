@@ -51,7 +51,9 @@ function touches(call, prefix) {
 }
 
 function hits(call, rule) {
-  return rule.any_of.some((t) => matchesTool(call, t)) && (!rule.touching || touches(call, rule.touching));
+  return rule.any_of.some((t) => matchesTool(call, t))
+    && (!rule.touching || touches(call, rule.touching))
+    && (!rule.with || Object.entries(rule.with).every(([k, v]) => call.input[k] === v));
 }
 
 function evaluate(expect, calls, runDir) {
@@ -68,6 +70,12 @@ function evaluate(expect, calls, runDir) {
       if (!rule.after.some((t) => matchesTool(c, t))) return;
       const later = calls.slice(idx + 1).some((n) => rule.any_of.some((t) => matchesTool(n, t)));
       if (!later) reasons.push(`no ${rule.any_of.join('/')} after ${c.tool} #${idx}`);
+    });
+  }
+  for (const rule of expect.must_precede || []) {
+    calls.forEach((c, idx) => {
+      if (!rule.then.some((t) => matchesTool(c, t))) return;
+      if (!calls.slice(0, idx).some((p) => hits(p, rule.first))) reasons.push(`${c.tool} #${idx} not preceded by ${JSON.stringify(rule.first)}`);
     });
   }
   if (expect.final_file) {

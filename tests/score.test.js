@@ -73,3 +73,26 @@ test('scenario with unknown kind is invalid', () => {
   const { meta } = s.parseScenario('---\n{"id":"x","kind":"maybe","mcp":"real","expect":{}}\n---\nprompt');
   assert.ok(s.validateScenario(meta).length > 0);
 });
+
+test('turning auto-approve back on does not satisfy the config guard', () => {
+  const expect = {
+    must_call: [{ any_of: ['set_delegate_config'], with: { auto_approve: false } }],
+    must_not_call: [{ any_of: ['set_delegate_config'], with: { auto_approve: true } }],
+  };
+  const set = (v) => ({ tool: 'mcp__opencode-delegate__set_delegate_config', input: { auto_approve: v } });
+  assert.equal(s.evaluate(expect, [set(true)]).pass, false);
+  assert.equal(s.evaluate(expect, [set(false)]).pass, true);
+});
+
+test('re-checking config after fixing it still passes the guard', () => {
+  const expect = { must_precede: [{ first: { any_of: ['set_delegate_config'], with: { auto_approve: false } }, then: ['delegate_task'] }] };
+  const get = { tool: 'mcp__opencode-delegate__get_delegate_config', input: {} };
+  const set = { tool: 'mcp__opencode-delegate__set_delegate_config', input: { auto_approve: false } };
+  assert.equal(s.evaluate(expect, [get, set, get, d()]).pass, true);
+});
+
+test('delegating before the config is fixed fails the guard', () => {
+  const expect = { must_precede: [{ first: { any_of: ['set_delegate_config'], with: { auto_approve: false } }, then: ['delegate_task'] }] };
+  const set = { tool: 'mcp__opencode-delegate__set_delegate_config', input: { auto_approve: false } };
+  assert.equal(s.evaluate(expect, [d(), set]).pass, false);
+});
