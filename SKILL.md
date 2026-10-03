@@ -24,7 +24,7 @@ Never pass `auto_approve: true` to `delegate_task`.
 | --- | --- |
 | boilerplate, types, Zod schemas and validators, CRUD models, test fixtures and scaffolding, docstrings and JSDoc, README sections, formatting, mechanical refactors | auth, security, payments and billing, PII, architecture, business rules, debugging, performance, code review |
 
-A request that mixes both: delegate the routine part and do the rest yourself. Details and worked cases: [delegation-boundaries.md](references/delegation-boundaries.md).
+A request that mixes both: delegate the routine part and do the rest yourself; anything touching the Keep column stays with you even if it looks like boilerplate or is described as routine (e.g. an auth validator or a billing model). Details and worked cases: [delegation-boundaries.md](references/delegation-boundaries.md).
 
 ## Delegation step
 
@@ -42,4 +42,4 @@ If `delegate_task` is not in your tool list, do the work directly. Do not instal
 
 ## Red flags
 
-You are about to Write or Edit a file for a delegate-list task and have not called `delegate_task`. Stop and delegate.
+`delegate_task` is listed and you are about to Write or Edit a file for a delegate-list task without having called it. Stop and delegate.

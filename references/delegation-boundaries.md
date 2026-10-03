@@ -22,8 +22,6 @@
 | Error-handling strategy, performance work | judgment, not typing |
 | Debugging, root-cause analysis, code review | needs the whole picture |
 
-When in doubt, ask: would you want a senior engineer to review this? If yes, keep it.
-
 ## Cases from testing
 
 | Request | Correct call |
