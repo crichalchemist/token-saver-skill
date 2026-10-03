@@ -32,7 +32,7 @@ with behavior proven by recorded RED/GREEN tests per `superpowers:writing-skills
 |---|---|---|
 | Audience | Public distribution | User |
 | Mechanism | MCP server `mryesiller/opencode-delegate-mcp` v0.2.3, pinned at commit `52440fd` | User; source reviewed |
-| Install source | `npx -y github:mryesiller/opencode-delegate-mcp#52440fd` (package not on npm) | `npm view` → 404 |
+| Install source | `npx -y github:mryesiller/opencode-delegate-mcp#52440fd` with server env `NPM_CONFIG_USERCONFIG=/dev/null` (package not on npm) | `npm view` → 404; npm 11.19 fails git-dep prepare with `EALLOWSCRIPTS` when user npmrc sets `allow-scripts` (as the `opencode-ai` install advises); override verified: 5 tools listed in 8s. setup.md documents the Windows (`NUL`) variant and that custom registry/proxy settings are ignored for this one server |
 | Default model | None hard-coded in SKILL.md; discover via `list_models`. Repo config uses `opencode/big-pickle` | Smoke test returned expected output |
 | `autoApprove` | `false` | Probe below; user |
 | Testing | Hybrid: csd workers for RED / GREEN / REFACTOR, Agent subagents for wording micro-tests, `anthropics/claude-code-action@v1` GREEN regression in CI | User |
@@ -103,6 +103,9 @@ Fixed regardless of RED outcome:
   scope `directory` tightly; read `git diff` after every delegation before
   relying on output; if the tools are absent, do the work directly and do
   not install anything.
+- Before the first delegation in a session, call `get_delegate_config`; if
+  `autoApprove` is `true`, call `set_delegate_config(auto_approve: false)`
+  before delegating. (A missed config path silently defaults to `true`.)
 
 Wording is derived from RED evidence, using this mapping:
 
@@ -247,14 +250,19 @@ user opens the PR to `main`.
 
 ## Unverified assumptions (verify first in the plan)
 
-1. `npx -y github:mryesiller/opencode-delegate-mcp#52440fd` builds via
-   `prepare` and starts the server.
-2. Claude Code resolves a relative `OPENCODE_DELEGATE_CONFIG` (or supports
-   `${CLAUDE_PROJECT_DIR}` expansion) in `.mcp.json` `env`.
-3. `claude-code-action@v1` exposes an execution log containing `tool_use`
-   entries, and accepts `--mcp-config` / `--strict-mcp-config` in
-   `claude_args`.
-4. csd passes harness args after `--` through to `claude`.
+1. ~~npx install builds via `prepare`~~ — resolved 2026-10-03, see
+   Install source row.
+2. ~~Config path in `.mcp.json` env~~ — resolved 2026-10-03:
+   `${CLAUDE_PROJECT_DIR}` is NOT expanded (server then silently loads
+   defaults, `autoApprove: true`); relative `./.claude/opencode-delegate.json`
+   works when `claude` starts at the repo root. Mitigation is a SKILL.md
+   requirement (below).
+3. ~~Action execution log~~ — resolved: `outputs.execution_file` (JSON
+   execution log), `claude_args` accepts `--mcp-config`; the action
+   auto-loads the repo `.mcp.json`, so eval jobs pass `--strict-mcp-config`.
+   `CLAUDE_WORKING_DIR` sets the run directory.
+4. ~~csd arg passthrough~~ — resolved: documented (`csd launch … -- <args>`).
+   Events are `{event:"pre_tool_use", ts, tool, tool_input}`.
 5. The `pre-commit` framework is installable here.
 
 If an assumption fails, the plan stops and the affected design point
