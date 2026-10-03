@@ -1,11 +1,13 @@
 # token-saver — agent conventions
 
 ## Branches
+
 - Work on `dev`. Never commit to `main`.
 - Release: `bash scripts/release-prep.sh <version>` → PR `release/<version>` → `main`.
 - `tests/results/` is evidence and lives on `dev` only.
 
 ## Commands
+
 - `bash scripts/check-skill.sh` — lint SKILL.md (frontmatter, ≤500 words, no model ids, links).
 - `bash scripts/build-skill.sh` / `--check` — build or verify `token-saver.skill`.
 - `pre-commit run -a` — all gates.
@@ -14,6 +16,7 @@
 - `bash tests/run-csd.sh <red|green|refactor> <scenario-id> [reps]` — live eval (local only).
 
 ## Rules
+
 - Any SKILL.md or references/ edit requires a RED run first (superpowers:writing-skills).
 - `token-saver.skill` is build output. Never edit it by hand.
 - No model ids in SKILL.md; models come from `list_models`.
@@ -23,4 +26,5 @@
   `claude` at the repo root.
 
 ## MCP
+
 - `opencode-delegate` (`.mcp.json`, `.gemini/settings.json`). `.agents/` has no standard MCP config.

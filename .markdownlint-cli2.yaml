@@ -1,0 +1,3 @@
+config:
+  MD013: false   # long lines are fine in tables and prompts
+  MD033: false

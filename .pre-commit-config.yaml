@@ -1,0 +1,39 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-json
+      - id: check-yaml
+      - id: end-of-file-fixer
+        exclude: ^(tests/results/|token-saver\.skill$)
+      - id: trailing-whitespace
+        exclude: ^(tests/results/|token-saver\.skill$)
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.17.2
+    hooks:
+      - id: markdownlint-cli2
+        exclude: ^(tests/results/|tests/scenarios/|docs/superpowers/)
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+  - repo: local
+    hooks:
+      - id: check-skill
+        name: check-skill
+        entry: bash scripts/check-skill.sh
+        language: system
+        pass_filenames: false
+        files: ^(SKILL\.md|references/)
+      - id: skill-in-sync
+        name: token-saver.skill in sync
+        entry: bash scripts/build-skill.sh --check
+        language: system
+        pass_filenames: false
+        files: ^(SKILL\.md|references/|token-saver\.skill)
+      - id: script-tests
+        name: script tests
+        entry: bash tests/scripts.test.sh
+        language: system
+        pass_filenames: false
+        files: ^(scripts/|tests/scripts\.test\.sh)
