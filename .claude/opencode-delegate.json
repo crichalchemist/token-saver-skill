@@ -1,0 +1,6 @@
+{
+  "defaultModel": "opencode/big-pickle",
+  "autoApprove": false,
+  "timeoutMs": 300000,
+  "profiles": {}
+}

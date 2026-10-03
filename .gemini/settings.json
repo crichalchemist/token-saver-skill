@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "opencode-delegate": {
+      "command": "npx",
+      "args": ["-y", "github:mryesiller/opencode-delegate-mcp#52440fd"],
+      "env": {
+        "NPM_CONFIG_USERCONFIG": "/dev/null",
+        "OPENCODE_DELEGATE_CONFIG": "./.claude/opencode-delegate.json"
+      }
+    }
+  }
+}

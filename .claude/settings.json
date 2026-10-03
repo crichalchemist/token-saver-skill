@@ -1,0 +1,17 @@
+{
+  "enabledMcpjsonServers": ["opencode-delegate"],
+  "permissions": {
+    "allow": [
+      "Bash(scripts/*)",
+      "Bash(bash scripts/*)",
+      "Bash(bash tests/*)",
+      "Bash(node tests/*)",
+      "Bash(pre-commit:*)",
+      "Bash(git:*)"
+    ],
+    "deny": [
+      "Bash(git push origin main:*)",
+      "Bash(git push * main:*)"
+    ]
+  }
+}

@@ -1,0 +1,4 @@
+.serena/
+.superpowers/
+node_modules/
+tests/.runs/
