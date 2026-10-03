@@ -1,0 +1,11 @@
+name: release-guard
+on:
+  pull_request:
+    branches: [main]
+jobs:
+  release-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - run: bash scripts/release-guard.sh origin/${{ github.base_ref }}

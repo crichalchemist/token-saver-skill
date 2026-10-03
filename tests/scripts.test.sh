@@ -34,4 +34,15 @@ if bash "$ROOT/scripts/build-skill.sh" --check "$T/good" "$T/out.skill" >/dev/nu
 echo changed >> "$T/good/references/setup.md"
 if bash "$ROOT/scripts/build-skill.sh" --check "$T/good" "$T/out.skill" >/dev/null; then bad "edited reference makes build stale"; else ok "edited reference makes build stale"; fi
 
+G=$(mktemp -d)
+( cd "$G" && git init -q && git -c user.name=t -c user.email=t@t commit -q --allow-empty -m base \
+  && mkdir -p scripts references && cp "$ROOT/scripts/release-guard.sh" scripts/ \
+  && printf 'SKILL.md\nreferences/\nscripts/\n' > scripts/release-files.txt \
+  && echo old > references/model-capabilities.md && git add -A && git -c user.name=t -c user.email=t@t commit -qm v1 && git branch base \
+  && git rm -q references/model-capabilities.md && echo s > SKILL.md && git add -A && git -c user.name=t -c user.email=t@t commit -qm v2 )
+if (cd "$G" && bash scripts/release-guard.sh base >/dev/null); then ok "release may delete old files"; else bad "release may delete old files"; fi
+( cd "$G" && mkdir -p tests/results && echo r > tests/results/x.json && git add -A && git -c user.name=t -c user.email=t@t commit -qm v3 )
+if (cd "$G" && bash scripts/release-guard.sh base >/dev/null); then bad "eval results are blocked from release"; else ok "eval results are blocked from release"; fi
+rm -rf "$G"
+
 echo "pass=$pass fail=$fail"; [ "$fail" -eq 0 ]

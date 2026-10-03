@@ -1,0 +1,55 @@
+name: skill-eval
+on:
+  workflow_dispatch:
+  pull_request:
+    paths: [SKILL.md, "references/**"]
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario: [D1-zod-schema, D2-fixtures-volume, D3-jsdoc, K1-jwt-deadline, K2-billing-batch, V1-defective-delegate, V2-delegate-timeout, V3-false-success, F1-no-mcp, C1-config-guard]
+        rep: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm i -g opencode-ai
+      - id: prep
+        run: |
+          echo "dir=$(bash tests/prepare-run.sh tests/scenarios/${{ matrix.scenario }}.md 1 ${{ runner.temp }}/run)" >> "$GITHUB_OUTPUT"
+          echo "tools=$(cat tests/allowed-tools.txt)" >> "$GITHUB_OUTPUT"
+      - id: claude
+        uses: anthropics/claude-code-action@v1
+        env:
+          CLAUDE_WORKING_DIR: ${{ steps.prep.outputs.dir }}
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt_file: ${{ steps.prep.outputs.dir }}/PROMPT.md
+          claude_args: >-
+            --mcp-config ${{ steps.prep.outputs.dir }}/mcp.json --strict-mcp-config
+            --max-turns 40 --permission-mode default
+            --allowedTools "${{ steps.prep.outputs.tools }}"
+      - if: always()
+        run: |
+          mkdir -p verdicts/${{ matrix.scenario }}-${{ matrix.rep }}
+          node tests/score.js --scenario tests/scenarios/${{ matrix.scenario }}.md \
+            --execution "${{ steps.claude.outputs.execution_file }}" --run-dir "${{ steps.prep.outputs.dir }}" \
+            > verdicts/${{ matrix.scenario }}-${{ matrix.rep }}/verdict.json || true
+          cat verdicts/${{ matrix.scenario }}-${{ matrix.rep }}/verdict.json
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verdict-${{ matrix.scenario }}-${{ matrix.rep }}
+          path: verdicts/
+  aggregate:
+    needs: run
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { path: all, pattern: "verdict-*", merge-multiple: true }
+      - run: node tests/score.js --aggregate all --min 2

@@ -1,46 +1,31 @@
 # Token Saver Skill
 
-A Claude Code skill that automatically delegates routine coding tasks to free AI models via OpenCode MCP, preserving Claude's context window and rate limits for complex reasoning.
+A Claude Code skill that tells Claude when to hand routine, well-specified coding work (boilerplate, fixtures, doc comments, mechanical refactors) to a cheaper model through the `opencode-delegate` MCP server. That keeps Claude's context and rate limit for design, debugging and review.
 
-## What It Does
+## What it does
 
-- **Automatically identifies** routine tasks (boilerplate, CRUD, refactoring, docs)
-- **Delegates to free models** (GLM-4, GitHub Copilot) via OpenCode
-- **Preserves Claude** for complex reasoning, architecture, security decisions
-
-## Installation
-
-1. Download `token-saver.skill`
-2. Add to your Claude Code skills directory
-3. Configure OpenCode MCP (see `references/mcp-config-template.json`)
-
-## Supported Free Models
-
-| Model | Provider | Best For |
-|-------|----------|----------|
-| `glm/glm-4` | Zhipu AI | Python, documentation |
-| `github-copilot/gpt-4.1` | GitHub | TypeScript, React |
-
-## When It Triggers
-
-**Delegates automatically:**
-- Boilerplate code generation
-- TypeScript/Python interfaces
-- CRUD operations
-- Test scaffolding
-- Documentation
-- Simple refactoring
-
-**Keeps in Claude:**
-- Architectural decisions
-- Security-sensitive code
-- Complex business logic
-- Debugging and analysis
+- Sends bounded, low-risk tasks to a free `opencode/*` model through [OpenCode](https://opencode.ai).
+- Keeps judgment-heavy work with Claude: architecture, security-sensitive code, tight deadlines.
+- Treats delegate output as untrusted: Claude checks the diff and the tests, and takes over when a delegation fails or reports success without changing anything.
+- Falls back to doing the work itself when the MCP server is not available.
 
 ## Requirements
 
-- [OpenCode](https://github.com/opencode-ai/opencode) MCP server configured
-- Free GitHub account (for Copilot access)
+- Claude Code
+- Node.js 18 or later
+- OpenCode (`npm i -g opencode-ai`)
+
+## Install
+
+Clone this repository into `~/.claude/skills/token-saver`, or unpack `token-saver.skill` there. Then register the MCP server; the steps are in [references/setup.md](references/setup.md).
+
+## Safety
+
+The server runs with `autoApprove: false`, so Claude must confirm each delegation. The delegate writes files and runs commands inside the `directory` you give it. Review the diff after every delegation.
+
+## Evidence
+
+Behavior is checked with scenario evals (`tests/scenarios/`). Without the skill, Claude delegated in 0 runs. With it, every scenario passes at least 4 of 5 local runs. Eval results live on the `dev` branch under `tests/results/`.
 
 ## License
 
