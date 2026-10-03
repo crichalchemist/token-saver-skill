@@ -30,11 +30,17 @@ A request that mixes both: delegate the routine part and do the rest yourself; a
 
 1. Call `delegate_task` with:
    - `task`: the goal, the files to create or change, the conventions to match (name an example file), and the check that proves it is done.
-   - `directory`: the absolute path of the narrowest directory that holds those files. The delegate writes files and runs commands inside `directory`.
+   - `directory`: the absolute path of the narrowest directory that holds those files. Write every path in `task` relative to `directory`. The delegate writes files and runs commands inside `directory`.
    - `model`: omit it to use the configured default. To choose one, call `list_models`.
-2. Run `git diff` as its own command, then open every new or changed file with Read. Do this after every delegation, before relying on the output.
+2. Run `git diff` as its own command, then open every new or changed file with Read. Do this after every delegation, even one that errored or timed out (files may remain), before relying on the output. Never trust "Done" or `ok`: confirm the files exist and hold the work.
 3. Run the project's checks (type checker, tests).
 4. Accept the result, fix small defects yourself, or redo the work if it is wrong. Tell the user what was delegated.
+
+## If a delegation fails
+
+| Rationalization | Reality |
+| --- | --- |
+| "It timed out because auto-approve is off." | Writes and commands inside `directory` need no approval. Split the task or raise `timeout_ms` via `set_delegate_config`. Never set `auto_approve` to `true`. |
 
 ## If the tools are missing
 
@@ -43,3 +49,5 @@ If `delegate_task` is not in your tool list, do the work directly. Do not instal
 ## Red flags
 
 `delegate_task` is listed and you are about to Write or Edit a file for a delegate-list task without having called it. Stop and delegate.
+
+A delegation failed or said "Done" and you have not run `git diff` and Read. Stop and review.
