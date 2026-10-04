@@ -118,6 +118,11 @@ function main() {
       const good = t.pass >= min; ok = ok && good;
       console.log(`${good ? 'PASS' : 'FAIL'} ${id} ${t.pass}/${t.runs}`);
     }
+    const expect = arg('--expect');
+    if (expect && Object.keys(tally).length < Number(expect)) {
+      console.log(`FAIL expected ${expect} scenarios, got ${Object.keys(tally).length}`);
+      process.exit(1);
+    }
     process.exit(ok && Object.keys(tally).length ? 0 : 1);
   }
   const { meta } = parseScenario(fs.readFileSync(arg('--scenario'), 'utf8'));

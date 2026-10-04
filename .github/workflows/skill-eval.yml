@@ -15,30 +15,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
-      - run: npm i -g opencode-ai
-      - id: prep
-        run: |
-          echo "dir=$(bash tests/prepare-run.sh tests/scenarios/${{ matrix.scenario }}.md 1 ${{ runner.temp }}/run)" >> "$GITHUB_OUTPUT"
-          echo "tools=$(cat tests/allowed-tools.txt)" >> "$GITHUB_OUTPUT"
-      - id: claude
-        uses: anthropics/claude-code-action@v1
+      - run: npm i -g @anthropic-ai/claude-code opencode-ai
+      - id: eval
         env:
-          CLAUDE_WORKING_DIR: ${{ steps.prep.outputs.dir }}
-        with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          prompt_file: ${{ steps.prep.outputs.dir }}/PROMPT.md
-          claude_args: >-
-            --mcp-config ${{ steps.prep.outputs.dir }}/mcp.json --strict-mcp-config
-            --max-turns 40 --permission-mode default
-            --allowedTools "${{ steps.prep.outputs.tools }}"
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          TOKEN_SAVER_RUNS: ${{ runner.temp }}/runs
+        run: bash tests/run-local.sh ci ${{ matrix.scenario }} 1
       - if: always()
         run: |
-          mkdir -p verdicts/${{ matrix.scenario }}-${{ matrix.rep }}
-          node tests/score.js --scenario tests/scenarios/${{ matrix.scenario }}.md \
-            --execution "${{ steps.claude.outputs.execution_file }}" --run-dir "${{ steps.prep.outputs.dir }}" \
-            > verdicts/${{ matrix.scenario }}-${{ matrix.rep }}/verdict.json || true
-          cat verdicts/${{ matrix.scenario }}-${{ matrix.rep }}/verdict.json
+          mkdir -p verdicts/${{ matrix.scenario }}-${{ matrix.rep }} && cp tests/results/ci/${{ matrix.scenario }}/1/verdict.json verdicts/${{ matrix.scenario }}-${{ matrix.rep }}/ && cat verdicts/${{ matrix.scenario }}-${{ matrix.rep }}/verdict.json
       - if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -52,4 +38,4 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with: { path: all, pattern: "verdict-*", merge-multiple: true }
-      - run: node tests/score.js --aggregate all --min 2
+      - run: node tests/score.js --aggregate all --min 2 --expect 10

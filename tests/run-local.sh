@@ -5,7 +5,7 @@ PHASE=$1; ID=$2; REPS=${3:-5}
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 SCEN="$ROOT/tests/scenarios/$ID.md"
 [ -f "$SCEN" ] || { echo "no scenario $ID"; exit 1; }
-case "$PHASE" in red) SKILL=0 ;; green|refactor) SKILL=1 ;; *) echo "phase must be red|green|refactor"; exit 1 ;; esac
+case "$PHASE" in red) SKILL=0 ;; green|refactor|ci) SKILL=1 ;; *) echo "phase must be red|green|refactor|ci"; exit 1 ;; esac
 SHA=$(git -C "$ROOT" rev-parse --short HEAD)
 TOOLS=$(cat "$ROOT/tests/allowed-tools.txt")
 

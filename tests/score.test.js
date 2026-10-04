@@ -96,3 +96,14 @@ test('delegating before the config is fixed fails the guard', () => {
   const set = { tool: 'mcp__opencode-delegate__set_delegate_config', input: { auto_approve: false } };
   assert.equal(s.evaluate(expect, [d(), set]).pass, false);
 });
+
+test('aggregate fails when a scenario produced no verdicts', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'agg-'));
+  for (const rep of ['a', 'b']) {
+    fs.mkdirSync(path.join(dir, rep));
+    fs.writeFileSync(path.join(dir, rep, 'verdict.json'), JSON.stringify({ id: 'X1', pass: true }));
+  }
+  const r = require('child_process').spawnSync('node', [path.join(__dirname, 'score.js'), '--aggregate', dir, '--min', '1', '--expect', '2']);
+  fs.rmSync(dir, { recursive: true });
+  assert.equal(r.status, 1);
+});
