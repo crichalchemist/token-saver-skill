@@ -31,6 +31,8 @@ jobs:
         run: |
           mkdir -p verdicts/${{ matrix.scenario }}-${{ matrix.rep }} && cp tests/results/ci/${{ matrix.scenario }}/1/verdict.json verdicts/${{ matrix.scenario }}-${{ matrix.rep }}/ && cat verdicts/${{ matrix.scenario }}-${{ matrix.rep }}/verdict.json
       - if: always()
+        run: tail -c 3000 tests/results/ci/${{ matrix.scenario }}/1/stream.jsonl
+      - if: always()
         uses: actions/upload-artifact@v4
         with:
           name: verdict-${{ matrix.scenario }}-${{ matrix.rep }}
