@@ -1,6 +1,9 @@
 name: skill-eval
 on:
   workflow_dispatch:
+  push:
+    branches: [dev]
+    paths: [SKILL.md, "references/**", "tests/**", .github/workflows/skill-eval.yml]
   pull_request:
     paths: [SKILL.md, "references/**"]
 jobs:
@@ -21,7 +24,9 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           TOKEN_SAVER_RUNS: ${{ runner.temp }}/runs
-        run: bash tests/run-local.sh ci ${{ matrix.scenario }} 1
+        run: |
+          [ -n "$ANTHROPIC_API_KEY" ] || unset ANTHROPIC_API_KEY
+          bash tests/run-local.sh ci ${{ matrix.scenario }} 1
       - if: always()
         run: |
           mkdir -p verdicts/${{ matrix.scenario }}-${{ matrix.rep }} && cp tests/results/ci/${{ matrix.scenario }}/1/verdict.json verdicts/${{ matrix.scenario }}-${{ matrix.rep }}/ && cat verdicts/${{ matrix.scenario }}-${{ matrix.rep }}/verdict.json
