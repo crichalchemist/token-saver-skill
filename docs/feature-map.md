@@ -16,3 +16,10 @@ A Claude Code skill that automatically delegates routine coding tasks to free AI
 
 - For each behavior changed by a PR, update the relevant feature-area row and link its test or verification entry point.
 - If a new user-visible behavior is added, add a row before merging.
+
+<!-- pr-review-canvas-review-step -->
+## PR Review Canvas
+
+| Capability | Implementation | Verification |
+| --- | --- | --- |
+| PR review guidance | `.github/skills/pr-review-canvas/SKILL.md` | Review GitHub CI status and validate linked test output, test script, implementation, feature map, and frontend video when applicable. |
